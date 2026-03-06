@@ -122,8 +122,8 @@
       var operatingHours;
 
       if (isMachine) {
-        // 機械主体: 直接原価 = 標準機械費用
-        directCost = dept.standard_machine_cost || 0;
+        // 機械主体: 直接原価 = 作業者人件費 ＋ 標準機械費用
+        directCost = (dept.annual_labor_cost || 0) + (dept.standard_machine_cost || 0);
         // 稼働時間 = 設備台数 × 1台あたり稼働時間
         operatingHours = (dept.machine_count || 0) * (dept.machine_operating_hours || 0);
       } else {
@@ -135,10 +135,6 @@
 
       // ── 間接費（配賦） ──
       var allocatedIndirect = commonIndirect * allocRatio;
-      // 機械主体の場合、作業者人件費も間接費に
-      if (isMachine) {
-        allocatedIndirect += (dept.annual_labor_cost || 0);
-      }
 
       var totalCost = directCost + allocatedIndirect;
 
