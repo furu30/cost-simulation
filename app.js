@@ -219,6 +219,11 @@
       reader.readAsText(file);
       e.target.value = "";
     });
+
+    // 使い方ガイドボタン
+    document.getElementById("btn-guide").addEventListener("click", function() {
+      switchTab("tab-guide");
+    });
   }
 
   function reloadAll() {

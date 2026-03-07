@@ -20,6 +20,7 @@
       <button id="btn-export" class="btn btn-outline" title="JSON書き出し">書き出し</button>
       <button id="btn-import" class="btn btn-outline" title="JSON読み込み">読み込み</button>
       <input type="file" id="file-import" accept=".json" style="display:none">
+      <button id="btn-guide" class="btn btn-outline" title="使い方ガイド" style="background:#2563eb;color:#fff;border-color:#2563eb">❓ 使い方</button>
     </div>
   </header>
 
@@ -28,6 +29,7 @@
     <button class="tab-item active" data-tab="tab-base">全社設定</button>
     <button class="tab-item" data-tab="tab-dept">部門（工程）</button>
     <button class="tab-item" data-tab="tab-product">製品原価</button>
+    <button class="tab-item" data-tab="tab-guide">使い方</button>
   </nav>
 
   <!-- ======== 画面1: 全社設定 (company_settings) ======== -->
@@ -196,6 +198,248 @@
       <h2>製品原価比較ダッシュボード</h2>
       <div id="product-compare-content"></div>
     </section>
+  </div>
+
+  <!-- ======== 画面4: 使い方ガイド ======== -->
+  <div id="tab-guide" class="tab-panel">
+
+    <!-- イントロ -->
+    <section class="card guide-intro">
+      <h2>製品原価シミュレーション 使い方ガイド</h2>
+      <p>このツールは、製品1個あたりの原価をシミュレーションするアプリです。<br>
+        全社の財務データと部門（工程）情報から<strong>アワーレート</strong>（時間あたり加工費）を自動計算し、各製品の原価構成と利益を可視化します。</p>
+      <div class="guide-callout guide-callout-info">
+        <strong>💡 まずはデモデータで体験！</strong><br>
+        ヘッダーの「<strong>デモデータ</strong>」ボタンを押すと、5部門・3製品のサンプルデータが投入されます。実際の動作を確認しながら読み進めてください。
+      </div>
+    </section>
+
+    <!-- 全体の流れ -->
+    <section class="card">
+      <h2>操作の流れ</h2>
+      <div class="guide-flow">
+        <div class="guide-flow-step">
+          <div class="guide-flow-num">1</div>
+          <div class="guide-flow-body">
+            <strong>全社設定</strong>
+            <span>計算方式を選び、P&L・製造原価報告書データを入力</span>
+          </div>
+        </div>
+        <div class="guide-flow-arrow">→</div>
+        <div class="guide-flow-step">
+          <div class="guide-flow-num">2</div>
+          <div class="guide-flow-body">
+            <strong>部門（工程）</strong>
+            <span>各工程の人件費・設備費を登録</span>
+          </div>
+        </div>
+        <div class="guide-flow-arrow">→</div>
+        <div class="guide-flow-step">
+          <div class="guide-flow-num">3</div>
+          <div class="guide-flow-body">
+            <strong>製品原価</strong>
+            <span>材料費・工程ルーティングを入力して原価・利益を確認</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 1: 全社設定 -->
+    <section class="card">
+      <h2>STEP 1: 全社設定タブ</h2>
+
+      <h3>1-1. 原価計算方式を選択</h3>
+      <p>画面上部の「システム設定」で、自社に合った原価計算方式を選びます。</p>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>方式</th><th>名称</th><th>特徴</th><th>適用場面</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>方式1</strong></td><td>簡易方式</td><td>全工程同一の統一レート</td><td>工程差が小さい場合。まずはここから</td></tr>
+          <tr><td><strong>方式2</strong></td><td>全社統一（直接/間接分離）</td><td>統一レートだが直接/間接を分離</td><td>間接費の比率を把握したい場合</td></tr>
+          <tr><td><strong>方式3</strong></td><td>部門別（人手主体）</td><td>部門ごとに異なるレート</td><td>工程ごとのコスト差が大きい場合</td></tr>
+          <tr><td><strong>方式4</strong></td><td>部門別（機械混在）</td><td>機械主体工程を区別</td><td>NC加工機等の多台持ち工程がある場合</td></tr>
+        </tbody>
+      </table>
+
+      <h3>1-2. 全社基礎データを入力</h3>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>項目</th><th>説明</th><th>デモ値</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>対象年度・名称</td><td>管理用の名前</td><td>2024年度 標準設定</td></tr>
+          <tr><td>共通年間労働時間(h)</td><td>1人あたりの年間稼働時間</td><td>1,800</td></tr>
+          <tr><td>間接費配賦基準</td><td>間接費を部門に配分する基準</td><td>人数比</td></tr>
+        </tbody>
+      </table>
+
+      <h3>1-3. 損益計算書（P&L）データ</h3>
+      <p><strong>売上高</strong>と<strong>販管費</strong>を千円単位で入力します。販管費は間接費として自動配賦されます。</p>
+
+      <h3>1-4. 製造原価報告書データ</h3>
+      <p>材料費・労務費・外注加工費・経費の各項目を千円単位で入力します。</p>
+
+      <div class="guide-callout guide-callout-danger">
+        <strong>🚨 減価償却費の入力に注意！</strong><br>
+        全社設定の「減価償却費」には、<strong>部門タブの「標準機械装置費用」に含めた分を除いた残り</strong>だけを入力してください。<br>
+        決算書の減価償却費をそのまま転記すると<strong>二重計上</strong>になります。
+      </div>
+
+      <div class="guide-example">
+        <strong>【例】</strong> 決算書の減価償却費が年間 <strong>5,000万円</strong> の場合
+        <table class="data-table compact" style="margin-top:8px">
+          <thead>
+            <tr><th>入力場所</th><th>入れるべき内容</th><th>金額</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>部門タブ「標準機械装置費用」</td><td>各工程で直接使う設備の償却費</td><td><strong>3,500万円</strong></td></tr>
+            <tr><td>全社設定「減価償却費」</td><td>建物・共用設備など間接的な償却費</td><td><strong>1,500万円</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-callout guide-callout-warning">
+        <strong>⚠️ 労務費も同様に注意</strong><br>
+        労務費（賃金・賞与・福利厚生費）は、部門タブの「作業者年間人件費」に含めた分と重複しないようにしてください。<br>
+        ただし、製造原価報告書には決算書の金額をそのまま入力してOKです（システムが自動で差し引き調整します）。
+      </div>
+
+      <h3>1-5. 間接費の自動計算を確認</h3>
+      <p>入力後、画面下部に間接費が自動計算されて表示されます。確認したら<strong>「保存」ボタン</strong>を押してください。</p>
+      <div class="guide-formula">
+        製造間接費 = 製造原価合計 − 材料費 − 外注費 − 直接人件費合計<br>
+        販管費 = P&L販管費<br>
+        <strong>間接費合計 = 製造間接費 + 販管費</strong>
+      </div>
+    </section>
+
+    <!-- STEP 2: 部門 -->
+    <section class="card">
+      <h2>STEP 2: 部門（工程）タブ</h2>
+
+      <h3>2-1. 部門を登録する</h3>
+      <p>「+ 部門追加」ボタンで、各製造部門（工程）を登録します。</p>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>項目</th><th>説明</th><th>デモ例（シートNC）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>工程名</td><td>部門・工程の名称</td><td>シート（NC）</td></tr>
+          <tr><td>直接作業者数</td><td>その工程の従事者数</td><td>8</td></tr>
+          <tr><td>作業者年間人件費(円)</td><td>全作業者の人件費合計</td><td>27,500,000</td></tr>
+          <tr><td>標準機械装置費用(年/円)</td><td>直接使用する設備の年間費用</td><td>28,584,000</td></tr>
+        </tbody>
+      </table>
+
+      <div class="guide-callout guide-callout-info">
+        <strong>💡 方式4で「機械主体」工程の場合</strong><br>
+        稼働形態を「機械主体（多台持ち等）」に変更し、設備台数と1台あたり稼働時間(h/年)を追加入力してください。
+      </div>
+
+      <h3>2-2. アワーレート一覧を確認</h3>
+      <p>部門登録後、画面下部に<strong>部門別アワーレート一覧</strong>が表示されます。</p>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>表示項目</th><th>意味</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>直接原価</td><td>人件費＋機械装置費用</td></tr>
+          <tr><td>間接費</td><td>全社間接費のうち配賦された額</td></tr>
+          <tr><td>直接レート(円/h)</td><td>直接原価 ÷ 稼働時間</td></tr>
+          <tr><td>間接レート(円/h)</td><td>間接費 ÷ 稼働時間</td></tr>
+          <tr><td>総レート(円/h)</td><td>総費用 ÷ 稼働時間</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- STEP 3: 製品原価 -->
+    <section class="card">
+      <h2>STEP 3: 製品原価タブ</h2>
+
+      <h3>3-1. 製品を登録する</h3>
+      <p>「+ 製品追加」ボタンで製品を登録します。</p>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>項目</th><th>説明</th><th>デモ例（製品A）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>製品コード</td><td>管理用コード</td><td>A</td></tr>
+          <tr><td>製品名</td><td>製品の名称</td><td>製品A</td></tr>
+          <tr><td>目標販売価格(円)</td><td>1個あたりの販売価格</td><td>1,775</td></tr>
+          <tr><td>直接材料費(円/個)</td><td>1個あたりの材料費</td><td>817</td></tr>
+          <tr><td>直接外注費(円/個)</td><td>外注費用</td><td>0</td></tr>
+        </tbody>
+      </table>
+
+      <h3>3-2. 製造ルーティングを設定</h3>
+      <p>「+ 工程追加」ボタンで、製品の製造工順を設定します。</p>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>項目</th><th>説明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>工順</td><td>製造工程の順序（1, 2, 3...）</td></tr>
+          <tr><td>工程</td><td>使用する部門をプルダウンから選択</td></tr>
+          <tr><td>作業時間(h/個)</td><td>1個あたりの加工時間（時間単位）</td></tr>
+        </tbody>
+      </table>
+
+      <div class="guide-callout guide-callout-info">
+        <strong>💡 作業時間の換算</strong><br>
+        1分 = 0.0167h、5分 = 0.0833h、10分 = 0.1667h<br>
+        秒単位の場合: 秒数 ÷ 3600 で時間に換算
+      </div>
+
+      <h3>3-3. 原価ウォーターフォール</h3>
+      <p>「保存」後に表示される原価の積み上げ表示です。</p>
+      <div class="guide-formula">
+        直接材料費 + 各工程の加工費 + 外注費 + 特約経費<br>
+        → <strong>▶ 直接原価</strong> + 製造間接費<br>
+        → <strong>▶ 製造原価</strong> + 販管費<br>
+        → <strong>▶ 総原価</strong>
+      </div>
+
+      <h3>3-4. 3つの利益ライン</h3>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>利益</th><th>計算式</th><th>意味</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>限界利益</strong></td><td>販売価格 − 直接原価</td><td>変動費を回収した後の貢献利益</td></tr>
+          <tr><td><strong>製造利益</strong></td><td>販売価格 − 製造原価</td><td>製造コストを回収した後の利益</td></tr>
+          <tr><td><strong>営業利益</strong></td><td>販売価格 − 総原価</td><td>全コスト回収後の最終利益</td></tr>
+        </tbody>
+      </table>
+      <p style="color:var(--text-muted);font-size:12px">※ 赤字の場合は赤色で表示されます。</p>
+
+      <h3>3-5. 製品原価比較ダッシュボード</h3>
+      <p>複数製品を登録すると、画面最下部に全製品の原価構成と利益率を横並びで比較できる一覧表が表示されます。</p>
+    </section>
+
+    <!-- データ出力 -->
+    <section class="card">
+      <h2>データの出力・管理</h2>
+      <table class="data-table compact">
+        <thead>
+          <tr><th>ボタン</th><th>機能</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>📊 Excel</strong></td><td>全データをシート別にExcel出力</td></tr>
+          <tr><td><strong>📄 PDF</strong></td><td>画面キャプチャをPDF化（1製品1ページ）</td></tr>
+          <tr><td><strong>書き出し</strong></td><td>JSONファイルでデータ保存（バックアップ用）</td></tr>
+          <tr><td><strong>読み込み</strong></td><td>JSONファイルからデータ復元</td></tr>
+          <tr><td><strong>デモデータ</strong></td><td>サンプルデータを投入して動作確認</td></tr>
+          <tr><td><strong>リセット</strong></td><td>全データ削除して初期状態に戻す</td></tr>
+        </tbody>
+      </table>
+
+      <div class="guide-callout guide-callout-warning">
+        <strong>⚠️ データの保存場所について</strong><br>
+        データはブラウザの <strong>localStorage</strong> に保存されます。キャッシュクリアでデータが消えるため、<strong>定期的にJSON書き出しでバックアップ</strong>してください。
+      </div>
+    </section>
+
   </div>
 
   <!-- 部門編集モーダル -->

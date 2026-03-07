@@ -618,3 +618,128 @@ input:focus, select:focus, textarea:focus {
 .mt-12 { margin-top: 12px; }
 .mb-8 { margin-bottom: 8px; }
 .gap-8 { gap: 8px; }
+
+/* ── 使い方ガイド ── */
+#tab-guide p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text);
+  margin: 6px 0 12px;
+}
+#tab-guide h3 {
+  margin-top: 20px;
+}
+
+/* イントロ */
+.guide-intro p {
+  font-size: 14px;
+}
+
+/* フロー図 */
+.guide-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.guide-flow-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--primary-light);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  flex: 1;
+  min-width: 180px;
+}
+.guide-flow-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.guide-flow-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.guide-flow-body strong {
+  font-size: 14px;
+  color: var(--primary);
+}
+.guide-flow-body span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.guide-flow-arrow {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* コールアウト */
+.guide-callout {
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.guide-callout-info {
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary);
+}
+.guide-callout-warning {
+  background: var(--warning-light);
+  border-left: 4px solid var(--warning);
+}
+.guide-callout-danger {
+  background: var(--danger-light);
+  border-left: 4px solid var(--danger);
+}
+
+/* 具体例ボックス */
+.guide-example {
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* 計算式ボックス */
+.guide-formula {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.8;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+}
+.guide-formula strong {
+  color: #38bdf8;
+}
+
+@media (max-width: 768px) {
+  .guide-flow {
+    flex-direction: column;
+  }
+  .guide-flow-arrow {
+    transform: rotate(90deg);
+  }
+  .guide-flow-step {
+    width: 100%;
+  }
+}
