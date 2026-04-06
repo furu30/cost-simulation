@@ -12,6 +12,8 @@
       saveDept();
     });
     document.getElementById("dept-is-machine-based").addEventListener("change", toggleMachineFields);
+    document.getElementById("dept-worker-count").addEventListener("input", updateLaborTotal);
+    document.getElementById("dept-labor-cost-per-person").addEventListener("input", updateLaborTotal);
 
     load();
     app.onTabSwitch("tab-dept", load);
@@ -45,7 +47,9 @@
       html += '</div>';
       html += '</div>';
       html += '<div class="dept-card-body">';
+      var perPerson = d.labor_cost_per_person || (d.worker_count > 0 ? Math.round(d.annual_labor_cost / d.worker_count) : 0);
       html += '<span class="label">直接作業者数</span><span class="value">' + (d.worker_count || 0) + '名</span>';
+      html += '<span class="label">1人あたり人件費</span><span class="value">' + app.formatNum(perPerson) + '円</span>';
       html += '<span class="label">年間人件費</span><span class="value">' + app.formatNum(d.annual_labor_cost || 0) + '円</span>';
       if (d.standard_machine_cost) {
         html += '<span class="label">機械装置費用</span><span class="value">' + app.formatNum(d.standard_machine_cost) + '円/年</span>';
@@ -152,12 +156,19 @@
   }
 
   // ── モーダル ──
+  function updateLaborTotal() {
+    var count = parseInt(document.getElementById("dept-worker-count").value) || 0;
+    var perPerson = parseFloat(document.getElementById("dept-labor-cost-per-person").value) || 0;
+    var total = count * perPerson;
+    document.getElementById("dept-labor-total-display").textContent = app.formatNum(total) + " 円";
+  }
+
   function openAddModal() {
     document.getElementById("dept-modal-title").textContent = "部門を追加";
     document.getElementById("dept-edit-idx").value = "";
     document.getElementById("dept-name").value = "";
     document.getElementById("dept-worker-count").value = 0;
-    document.getElementById("dept-annual-labor-cost").value = 0;
+    document.getElementById("dept-labor-cost-per-person").value = 0;
     document.getElementById("dept-alloc-value").value = 0;
     document.getElementById("dept-is-machine-based").value = "false";
     document.getElementById("dept-machine-cost").value = 0;
@@ -165,6 +176,7 @@
     document.getElementById("dept-machine-hours").value = 0;
     toggleMachineFields();
     toggleAllocValueField();
+    updateLaborTotal();
     document.getElementById("dept-modal").style.display = "grid";
   }
 
@@ -177,7 +189,7 @@
     document.getElementById("dept-edit-idx").value = idx;
     document.getElementById("dept-name").value = d.department_name || "";
     document.getElementById("dept-worker-count").value = d.worker_count || 0;
-    document.getElementById("dept-annual-labor-cost").value = d.annual_labor_cost || 0;
+    document.getElementById("dept-labor-cost-per-person").value = d.labor_cost_per_person || (d.worker_count > 0 ? Math.round(d.annual_labor_cost / d.worker_count) : 0);
     document.getElementById("dept-alloc-value").value = d.allocation_base_value || 0;
     document.getElementById("dept-is-machine-based").value = d.is_machine_based ? "true" : "false";
     document.getElementById("dept-machine-cost").value = d.standard_machine_cost || 0;
@@ -185,6 +197,7 @@
     document.getElementById("dept-machine-hours").value = d.machine_operating_hours || 0;
     toggleMachineFields();
     toggleAllocValueField();
+    updateLaborTotal();
     document.getElementById("dept-modal").style.display = "grid";
   }
 
@@ -221,7 +234,8 @@
     }
 
     var workerCount = parseInt(document.getElementById("dept-worker-count").value) || 0;
-    var laborCost = parseFloat(document.getElementById("dept-annual-labor-cost").value) || 0;
+    var laborCostPerPerson = parseFloat(document.getElementById("dept-labor-cost-per-person").value) || 0;
+    var laborCost = workerCount * laborCostPerPerson;
     var isMachine = document.getElementById("dept-is-machine-based").value === "true";
     var machineCount = parseInt(document.getElementById("dept-machine-count").value) || 0;
     var machineHours = parseInt(document.getElementById("dept-machine-hours").value) || 0;
@@ -231,8 +245,8 @@
       app.showToast("直接作業者数は1人以上を入力してください", "error");
       return;
     }
-    if (laborCost <= 0) {
-      app.showToast("作業者年間人件費を入力してください", "error");
+    if (laborCostPerPerson <= 0) {
+      app.showToast("1人あたり年間人件費を入力してください", "error");
       return;
     }
     if (isMachine && machineCount <= 0) {
@@ -247,6 +261,7 @@
     var dept = {
       department_name: name,
       worker_count: workerCount,
+      labor_cost_per_person: laborCostPerPerson,
       annual_labor_cost: laborCost,
       allocation_base_value: parseFloat(document.getElementById("dept-alloc-value").value) || 0,
       is_machine_based: isMachine,

@@ -475,8 +475,13 @@
           <label>直接作業者数 *</label>
           <input type="number" id="dept-worker-count" class="input-num" min="0" step="1" value="0">
 
-          <label>作業者年間人件費(円) *</label>
-          <input type="number" id="dept-annual-labor-cost" class="input-num" step="1" value="0">
+          <label>1人あたり年間人件費(円) *</label>
+          <input type="number" id="dept-labor-cost-per-person" class="input-num" step="1" value="0">
+        </div>
+        <div class="summary-row" id="dept-labor-summary" style="margin-top:4px;margin-bottom:8px">
+          作業者人件費合計: <strong id="dept-labor-total-display">0 円</strong>
+        </div>
+        <div class="form-grid">
 
           <label>標準機械装置費用(年/円)</label>
           <input type="number" id="dept-machine-cost" class="input-num" step="1" value="0">

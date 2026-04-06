@@ -275,32 +275,37 @@
       departments: [
         {
           id: 1, department_name: "シート（NC）", worker_count: 8,
-          annual_labor_cost: 27500000, allocation_base_type: "worker_count",
+          labor_cost_per_person: 3500000, annual_labor_cost: 28000000,
+          allocation_base_type: "worker_count",
           allocation_base_value: 0, is_machine_based: true,
           standard_machine_cost: 28584000, machine_count: 6,
           machine_operating_hours: 3960
         },
         {
           id: 2, department_name: "プレス", worker_count: 10,
-          annual_labor_cost: 26500000, allocation_base_type: "worker_count",
+          labor_cost_per_person: 3200000, annual_labor_cost: 32000000,
+          allocation_base_type: "worker_count",
           allocation_base_value: 0, is_machine_based: false,
           standard_machine_cost: 4800000, machine_count: 0, machine_operating_hours: 0
         },
         {
           id: 3, department_name: "曲げ", worker_count: 6,
-          annual_labor_cost: 14000000, allocation_base_type: "worker_count",
+          labor_cost_per_person: 3300000, annual_labor_cost: 19800000,
+          allocation_base_type: "worker_count",
           allocation_base_value: 0, is_machine_based: false,
           standard_machine_cost: 3600000, machine_count: 0, machine_operating_hours: 0
         },
         {
           id: 4, department_name: "溶接", worker_count: 12,
-          annual_labor_cost: 36000000, allocation_base_type: "worker_count",
+          labor_cost_per_person: 3400000, annual_labor_cost: 40800000,
+          allocation_base_type: "worker_count",
           allocation_base_value: 0, is_machine_based: false,
           standard_machine_cost: 2400000, machine_count: 0, machine_operating_hours: 0
         },
         {
           id: 5, department_name: "塗装仕上", worker_count: 5,
-          annual_labor_cost: 13900000, allocation_base_type: "worker_count",
+          labor_cost_per_person: 3100000, annual_labor_cost: 15500000,
+          allocation_base_type: "worker_count",
           allocation_base_value: 0, is_machine_based: false,
           standard_machine_cost: 1800000, machine_count: 0, machine_operating_hours: 0
         }
