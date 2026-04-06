@@ -59,9 +59,7 @@
       }
 
       if (level >= 4 && isMachine) {
-        html += '<span class="label">稼働形態</span><span class="value" style="color:var(--primary);font-weight:600">機械主体</span>';
-        html += '<span class="label">設備台数</span><span class="value">' + (d.machine_count || 0) + '台</span>';
-        html += '<span class="label">1台稼働時間</span><span class="value">' + app.formatNum(d.machine_operating_hours || 0) + 'h/年</span>';
+        html += '<div class="dept-labor-row"><span class="label">稼働形態</span><span class="value" style="color:var(--primary);font-weight:600">機械主体</span><span class="label">設備台数</span><span class="value">' + (d.machine_count || 0) + '台</span><span class="label">1台稼働時間</span><span class="value">' + app.formatNum(d.machine_operating_hours || 0) + 'h/年</span></div>';
       }
 
       html += '</div></div>';
