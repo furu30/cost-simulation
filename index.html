@@ -99,12 +99,17 @@
         <label>共通年間労働時間(h)</label>
         <input type="number" id="cs-common-working-hours" class="input-num" step="1" value="0">
 
-        <label>間接費配賦基準</label>
+        <label>製造間接費 配賦基準</label>
         <select id="cs-alloc-type">
+          <option value="operating_hours">稼働時間比</option>
+          <option value="direct_cost">直接原価比</option>
           <option value="worker_count">人数比</option>
           <option value="area">面積比</option>
           <option value="manual">手動（%指定）</option>
         </select>
+      </div>
+      <div id="sga-alloc-info" style="display:none;margin-top:4px;font-size:12px;color:var(--text-muted)">
+        ※ 販管費は製品の直接原価比で自動配賦されます（部門配賦ではなく製品に直接配賦）
       </div>
       <div class="summary-row" id="cs-summary"></div>
       <div class="summary-row" id="indirect-summary" style="margin-top:4px;background:var(--warning-light)"></div>

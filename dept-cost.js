@@ -83,7 +83,7 @@
     if (level === 1) {
       // 方式1（簡易）: 総費用/稼働時間/統一レートのみ
       thead.innerHTML = '<tr><th>部門</th><th>総費用(円)</th><th>稼働時間(h)</th><th>レート(円/h)</th></tr>';
-      var lv1 = app.calcEngine.calcLv1Rate(cs, depts);
+      var lv1 = app.calcEngine.calcLv1Rate(cs, depts, level);
       var deptResults = app.calcEngine.calcDeptRatesLv3(cs, depts, false);
       var rows = deptResults.map(function(r) {
         return '<tr class="text-muted">' +
@@ -103,7 +103,7 @@
     } else if (level === 2) {
       // 方式2: 全社統一（直接/間接分離）
       thead.innerHTML = '<tr><th>部門</th><th>直接原価(円)</th><th>間接費(円)</th><th>総費用(円)</th><th>稼働時間(h)</th><th>直接レート(円/h)</th><th>間接レート(円/h)</th><th>総レート(円/h)</th></tr>';
-      var lv1 = app.calcEngine.calcLv1Rate(cs, depts);
+      var lv1 = app.calcEngine.calcLv1Rate(cs, depts, level);
       var deptResults = app.calcEngine.calcDeptRatesLv3(cs, depts, false);
       var rows = deptResults.map(function(r) {
         return '<tr class="text-muted">' +

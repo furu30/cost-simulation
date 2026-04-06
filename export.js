@@ -90,7 +90,7 @@
 
     var allowMachine = (level === 4);
     var rates = app.calcEngine.calcDeptRatesLv3(cs, depts, allowMachine);
-    var lv1 = app.calcEngine.calcLv1Rate(cs, depts);
+    var lv1 = app.calcEngine.calcLv1Rate(cs, depts, level);
 
     var rows = [
       ["製品原価シミュレーション - 部門・レート一覧"],
@@ -150,7 +150,7 @@
     var deptRates = [];
     var lv1Rate = null;
     if (level <= 2) {
-      lv1Rate = app.calcEngine.calcLv1Rate(cs, depts);
+      lv1Rate = app.calcEngine.calcLv1Rate(cs, depts, level);
     } else {
       deptRates = app.calcEngine.calcDeptRatesLv3(cs, depts, level === 4);
     }
@@ -163,15 +163,17 @@
        "販売価格", "限界利益率(%)", "製造利益率(%)", "営業利益率(%)"]
     ];
 
-    products.forEach(function(p) {
-      var c;
+    var allCosts = products.map(function(p) {
       if (level <= 2) {
-        c = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts, level);
+        return app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts, level);
       } else {
-        c = app.calcEngine.calcProductCost(p, deptRates, cs, level);
+        return app.calcEngine.calcProductCost(p, deptRates, cs, level);
       }
-      enrichCostResult(c, cs);
+    });
+    allCosts.forEach(function(c) { enrichCostResult(c, cs, allCosts); });
 
+    allCosts.forEach(function(c, i) {
+      var p = products[i];
       rows.push([
         (p.product_code || "") + " " + (p.product_name || ""),
         Math.round(c.materialCost),
@@ -206,7 +208,7 @@
     var deptRates = [];
     var lv1Rate = null;
     if (level <= 2) {
-      lv1Rate = app.calcEngine.calcLv1Rate(cs, depts);
+      lv1Rate = app.calcEngine.calcLv1Rate(cs, depts, level);
     } else {
       deptRates = app.calcEngine.calcDeptRatesLv3(cs, depts, level === 4);
     }
@@ -215,14 +217,17 @@
       ["製品原価シミュレーション - 製品原価詳細"]
     ];
 
-    products.forEach(function(p, pi) {
-      var c;
+    var allCosts2 = products.map(function(p) {
       if (level <= 2) {
-        c = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts, level);
+        return app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts, level);
       } else {
-        c = app.calcEngine.calcProductCost(p, deptRates, cs, level);
+        return app.calcEngine.calcProductCost(p, deptRates, cs, level);
       }
-      enrichCostResult(c, cs);
+    });
+    allCosts2.forEach(function(c) { enrichCostResult(c, cs, allCosts2); });
+
+    products.forEach(function(p, pi) {
+      var c = allCosts2[pi];
 
       rows.push([]);
       rows.push(["■ " + (p.product_code || "") + " " + (p.product_name || "")]);
@@ -266,18 +271,23 @@
   }
 
   // enrichCostResult (product-cost.js と同じロジック)
-  function enrichCostResult(cost, cs) {
-    var mfg = Math.max(0, cs.mfg_indirect_expenses || 0);
-    var sga = Math.max(0, cs.sga_indirect_expenses || 0);
-    var sum = mfg + sga;
-    var mfgRatio = sum > 0 ? mfg / sum : 0;
-
-    var totalIndirect = cost.totalIndirectProcess || 0;
-    cost.mfgIndirectProcess = totalIndirect * mfgRatio;
-    cost.sgaIndirectProcess = totalIndirect - cost.mfgIndirectProcess;
+  function enrichCostResult(cost, cs, allCosts) {
+    cost.mfgIndirectProcess = cost.totalIndirectProcess || 0;
+    var sgaTotal = cs.sga_indirect_expenses || 0;
+    cost.sgaIndirectProcess = 0;
+    if (sgaTotal > 0 && allCosts && allCosts.length > 0) {
+      var totalDirectAll = 0;
+      allCosts.forEach(function(c) { totalDirectAll += c.directCostTotal || 0; });
+      if (totalDirectAll > 0) {
+        cost.sgaIndirectProcess = Math.round(sgaTotal * ((cost.directCostTotal || 0) / totalDirectAll));
+      }
+    }
     cost.manufacturingCost = (cost.directCostTotal || 0) + cost.mfgIndirectProcess;
     cost.manufacturingProfit = (cost.sellingPrice || 0) - cost.manufacturingCost;
     cost.manufacturingProfitRate = cost.sellingPrice > 0 ? cost.manufacturingProfit / cost.sellingPrice * 100 : 0;
+    cost.totalCost = cost.manufacturingCost + cost.sgaIndirectProcess;
+    cost.operatingProfit = (cost.sellingPrice || 0) - cost.totalCost;
+    cost.operatingProfitRate = cost.sellingPrice > 0 ? cost.operatingProfit / cost.sellingPrice * 100 : 0;
     return cost;
   }
 

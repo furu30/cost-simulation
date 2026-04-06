@@ -62,7 +62,7 @@
     // 全社設定
     document.getElementById(csIdMap.setting_name).value = cs.setting_name || "";
     document.getElementById(csIdMap.common_working_hours).value = cs.common_working_hours || 0;
-    document.getElementById(csIdMap.allocation_base_type).value = cs.allocation_base_type || "worker_count";
+    document.getElementById(csIdMap.allocation_base_type).value = cs.mfg_alloc_type || cs.allocation_base_type || "operating_hours";
 
     // P&L
     plFields.forEach(function(f) {
@@ -116,7 +116,9 @@
     // 全社設定
     data.companySettings.setting_name = document.getElementById(csIdMap.setting_name).value.trim();
     var hours = parseInt(document.getElementById(csIdMap.common_working_hours).value) || 0;
-    data.companySettings.allocation_base_type = document.getElementById(csIdMap.allocation_base_type).value;
+    var allocVal = document.getElementById(csIdMap.allocation_base_type).value;
+    data.companySettings.allocation_base_type = allocVal;
+    data.companySettings.mfg_alloc_type = allocVal;
 
     // バリデーション
     if (hours > 0 && (hours < 100 || hours > 4000)) {
@@ -262,7 +264,7 @@
     // ── 全社設定サマリー（方式1のみ表示） ──
     var csSummary = document.getElementById("cs-summary");
     if (level === 1 && hours > 0 && depts.length > 0) {
-      var lv1 = app.calcEngine.calcLv1Rate(tempCs, depts);
+      var lv1 = app.calcEngine.calcLv1Rate(tempCs, depts, level);
       csSummary.innerHTML =
         "全社統一レート: <strong>" + app.formatNum(Math.round(lv1.hourlyRate)) + " 円/h</strong>" +
         "　｜　稼働時間合計: " + app.formatNum(lv1.totalHours) + " h";

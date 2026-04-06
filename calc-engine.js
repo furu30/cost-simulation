@@ -9,9 +9,12 @@
    * @param {Array} departments - 部門一覧（直接原価の合算に使用）
    * @returns {Object} 全社統一の直接/間接レート
    */
-  function calcLv1Rate(cs, departments) {
+  function calcLv1Rate(cs, departments, level) {
     var commonHours = cs.common_working_hours || 0;
-    var commonIndirect = cs.common_indirect_expenses || 0;
+    // 方式1: 全間接費（合算）、方式2: 製造間接費のみ（販管費は製品に直接配賦）
+    var commonIndirect = (level || 1) === 1
+      ? (cs.common_indirect_expenses || 0)
+      : (cs.mfg_indirect_expenses || 0);
 
     // 全部門の直接原価（人件費＋機械装置費用）と稼働時間を合算
     var totalDirectCost = 0;
@@ -103,53 +106,51 @@
     if (allowMachine === undefined) allowMachine = true;
     if (!departments.length) return [];
 
-    var commonIndirect = cs.common_indirect_expenses || 0;
+    // 製造間接費のみ部門に配賦（販管費は製品に直接配賦するため除外）
+    var mfgIndirect = cs.mfg_indirect_expenses || 0;
     var commonHours = cs.common_working_hours || 0;
-    var allocType = cs.allocation_base_type || "worker_count";
+    var allocType = cs.mfg_alloc_type || cs.allocation_base_type || "worker_count";
 
-    var totalAllocBase = 0;
-    departments.forEach(function(d) {
-      totalAllocBase += getAllocValue(d, allocType);
-    });
-
-    return departments.map(function(dept) {
-      var allocValue = getAllocValue(dept, allocType);
-      var allocRatio = totalAllocBase > 0 ? allocValue / totalAllocBase : 0;
+    // まず全部門の直接原価と稼働時間を事前計算（稼働時間比・直接原価比で必要）
+    var deptInfo = departments.map(function(dept) {
       var isMachine = allowMachine ? dept.is_machine_based : false;
-
-      // ── 直接原価 ──
-      var directCost;
+      var directCost = (dept.annual_labor_cost || 0) + (dept.standard_machine_cost || 0);
       var operatingHours;
-
       if (isMachine) {
-        // 機械主体: 直接原価 = 作業者人件費 ＋ 標準機械費用
-        directCost = (dept.annual_labor_cost || 0) + (dept.standard_machine_cost || 0);
-        // 稼働時間 = 設備台数 × 1台あたり稼働時間
         operatingHours = (dept.machine_count || 0) * (dept.machine_operating_hours || 0);
       } else {
-        // 人手主体: 直接原価 = 作業者人件費 ＋ 機械装置費用
-        directCost = (dept.annual_labor_cost || 0) + (dept.standard_machine_cost || 0);
-        // 稼働時間 = 作業者数 × 共通年間労働時間
         operatingHours = (dept.worker_count || 0) * commonHours;
       }
+      return { dept: dept, directCost: directCost, operatingHours: operatingHours, isMachine: isMachine };
+    });
 
-      // ── 間接費（配賦） ──
-      var allocatedIndirect = commonIndirect * allocRatio;
+    // 配賦基準値の合計を計算
+    var totalAllocBase = 0;
+    deptInfo.forEach(function(di) {
+      totalAllocBase += getDeptAllocValue(di, allocType);
+    });
 
-      var totalCost = directCost + allocatedIndirect;
+    return deptInfo.map(function(di) {
+      var allocValue = getDeptAllocValue(di, allocType);
+      var allocRatio = totalAllocBase > 0 ? allocValue / totalAllocBase : 0;
+
+      // ── 製造間接費の配賦（販管費は含まない） ──
+      var allocatedIndirect = mfgIndirect * allocRatio;
+
+      var totalCost = di.directCost + allocatedIndirect;
 
       // レート計算
-      var directHourlyRate = operatingHours > 0 ? directCost / operatingHours : 0;
-      var indirectHourlyRate = operatingHours > 0 ? allocatedIndirect / operatingHours : 0;
-      var hourlyRate = operatingHours > 0 ? totalCost / operatingHours : 0;
+      var directHourlyRate = di.operatingHours > 0 ? di.directCost / di.operatingHours : 0;
+      var indirectHourlyRate = di.operatingHours > 0 ? allocatedIndirect / di.operatingHours : 0;
+      var hourlyRate = di.operatingHours > 0 ? totalCost / di.operatingHours : 0;
 
       return {
-        dept: dept,
+        dept: di.dept,
         allocRatio: allocRatio,
-        directCost: directCost,
+        directCost: di.directCost,
         allocatedIndirect: allocatedIndirect,
         totalCost: totalCost,
-        operatingHours: operatingHours,
+        operatingHours: di.operatingHours,
         directHourlyRate: directHourlyRate,
         directMinuteRate: directHourlyRate / 60,
         indirectHourlyRate: indirectHourlyRate,
@@ -161,15 +162,16 @@
   }
 
   /**
-   * 配賦基準値を取得（人数比/面積比/手動）
-   * @param {Object} dept - 部門データ
-   * @param {string} allocType - 全社設定の配賦基準区分
+   * 部門の配賦基準値を取得
+   * @param {Object} di - {dept, directCost, operatingHours} 事前計算済み部門情報
+   * @param {string} allocType - 配賦基準区分
    */
-  function getAllocValue(dept, allocType) {
-    var type = allocType || dept.allocation_base_type || "worker_count";
-    if (type === "worker_count") return dept.worker_count || 0;
-    if (type === "area" || type === "manual") return dept.allocation_base_value || 0;
-    return dept.worker_count || 0;
+  function getDeptAllocValue(di, allocType) {
+    if (allocType === "operating_hours") return di.operatingHours || 0;
+    if (allocType === "direct_cost") return di.directCost || 0;
+    if (allocType === "worker_count") return di.dept.worker_count || 0;
+    if (allocType === "area" || allocType === "manual") return di.dept.allocation_base_value || 0;
+    return di.dept.worker_count || 0;
   }
 
   // ════════════════════════════════════════════════════

@@ -13,28 +13,39 @@
   }
 
   /**
-   * 製造間接費/販管費の比率を取得
-   * @returns {{ mfgRatio: number, sgaRatio: number }}
+   * 製品原価結果に製造利益・販管費配賦を追加
+   * 製造間接費: 部門配賦済み（calc-engineで計算済み、totalIndirectProcessに含まれる）
+   * 販管費: 製品の直接原価比で直接配賦
    */
-  function getMfgSgaRatio(cs) {
-    var mfg = Math.max(0, cs.mfg_indirect_expenses || 0);
-    var sga = Math.max(0, cs.sga_indirect_expenses || 0);
-    var sum = mfg + sga;
-    if (sum <= 0) return { mfgRatio: 0, sgaRatio: 0 };
-    return { mfgRatio: mfg / sum, sgaRatio: sga / sum };
-  }
+  function enrichCostResult(cost, cs, allCosts) {
+    // 製造間接費は部門配賦済みなのでそのまま使う
+    cost.mfgIndirectProcess = cost.totalIndirectProcess || 0;
 
-  /**
-   * 製品原価結果に製造利益を追加
-   */
-  function enrichCostResult(cost, cs) {
-    var ratio = getMfgSgaRatio(cs);
-    var totalIndirect = cost.totalIndirectProcess || 0;
-    cost.mfgIndirectProcess = totalIndirect * ratio.mfgRatio;
-    cost.sgaIndirectProcess = totalIndirect - cost.mfgIndirectProcess;
+    // 販管費を直接原価比で製品に直接配賦
+    var sgaTotal = cs.sga_indirect_expenses || 0;
+    cost.sgaIndirectProcess = 0;
+    if (sgaTotal > 0 && allCosts && allCosts.length > 0) {
+      // 全製品の直接原価合計を算出
+      var totalDirectAll = 0;
+      allCosts.forEach(function(c) {
+        totalDirectAll += c.directCostTotal || 0;
+      });
+      if (totalDirectAll > 0) {
+        var myDirect = cost.directCostTotal || 0;
+        cost.sgaIndirectProcess = Math.round(sgaTotal * (myDirect / totalDirectAll));
+      }
+    }
+
+    // 製造原価 = 直接原価 + 製造間接費
     cost.manufacturingCost = (cost.directCostTotal || 0) + cost.mfgIndirectProcess;
     cost.manufacturingProfit = (cost.sellingPrice || 0) - cost.manufacturingCost;
     cost.manufacturingProfitRate = cost.sellingPrice > 0 ? cost.manufacturingProfit / cost.sellingPrice * 100 : 0;
+
+    // 総原価を再計算（直接原価 + 製造間接費 + 販管費）
+    cost.totalCost = cost.manufacturingCost + cost.sgaIndirectProcess;
+    cost.operatingProfit = (cost.sellingPrice || 0) - cost.totalCost;
+    cost.operatingProfitRate = cost.sellingPrice > 0 ? cost.operatingProfit / cost.sellingPrice * 100 : 0;
+
     return cost;
   }
 
@@ -55,14 +66,27 @@
     var deptRates = [];
     var lv1Rate = null;
     if (level <= 2) {
-      lv1Rate = app.calcEngine.calcLv1Rate(cs, departments);
+      lv1Rate = app.calcEngine.calcLv1Rate(cs, departments, level);
     } else {
       var allowMachine = (level === 4);
       deptRates = app.calcEngine.calcDeptRatesLv3(cs, departments, allowMachine);
     }
 
+    // 先に全製品の原価を計算（販管費の直接原価比配賦に全製品のデータが必要）
+    var allCosts = products.map(function(p) {
+      if (level <= 2) {
+        return app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, departments, level);
+      } else {
+        return app.calcEngine.calcProductCost(p, deptRates, cs, level);
+      }
+    });
+    // 販管費配賦を含むenrich処理
+    if (level >= 2) {
+      allCosts.forEach(function(cost) { enrichCostResult(cost, cs, allCosts); });
+    }
+
     container.innerHTML = products.map(function(p, idx) {
-      return renderProductCard(p, idx, departments, deptRates, lv1Rate, cs, level);
+      return renderProductCardFromCost(p, idx, allCosts[idx], departments, deptRates, lv1Rate, cs, level);
     }).join("");
 
     // イベント登録
@@ -74,14 +98,7 @@
     renderCompareTable(products, departments, deptRates, lv1Rate, cs, level);
   }
 
-  function renderProductCard(p, idx, departments, deptRates, lv1Rate, cs, level) {
-    var cost;
-    if (level <= 2) {
-      cost = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, departments, level);
-    } else {
-      cost = app.calcEngine.calcProductCost(p, deptRates, cs, level);
-    }
-    enrichCostResult(cost, cs);
+  function renderProductCardFromCost(p, idx, cost, departments, deptRates, lv1Rate, cs, level) {
 
     var html = '<div class="product-card" data-idx="' + idx + '">';
 
@@ -378,17 +395,19 @@
         '</tr>';
       });
     } else {
-      // 方式2以上: 直間分離あり → 詳細な列構成
-      html += '<thead><tr><th>製品</th><th>直接材料費</th><th>直接加工費</th><th>直接外注費</th><th>直接原価計</th><th>製造間接費</th><th>製造原価</th><th>販管費</th><th>総原価</th><th>販売価格</th><th>限界利益率</th><th>製造利益率</th><th>営業利益率</th></tr></thead><tbody>';
-      products.forEach(function(p) {
-        var c;
+      // 方式2以上: 先に全製品のcostを計算してenrich
+      var allCosts = products.map(function(p) {
         if (level === 2) {
-          c = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, departments, level);
+          return app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, departments, level);
         } else {
-          c = app.calcEngine.calcProductCost(p, deptRates, cs, level);
+          return app.calcEngine.calcProductCost(p, deptRates, cs, level);
         }
-        enrichCostResult(c, cs);
+      });
+      allCosts.forEach(function(c) { enrichCostResult(c, cs, allCosts); });
 
+      html += '<thead><tr><th>製品</th><th>直接材料費</th><th>直接加工費</th><th>直接外注費</th><th>直接原価計</th><th>製造間接費</th><th>製造原価</th><th>販管費</th><th>総原価</th><th>販売価格</th><th>限界利益率</th><th>製造利益率</th><th>営業利益率</th></tr></thead><tbody>';
+      allCosts.forEach(function(c, i) {
+        var p = products[i];
         var mgClass = c.marginalProfitRate >= 0 ? "profit-positive" : "profit-negative";
         var mfClass = c.manufacturingProfitRate >= 0 ? "profit-positive" : "profit-negative";
         var opClass = c.operatingProfitRate >= 0 ? "profit-positive" : "profit-negative";

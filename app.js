@@ -416,6 +416,10 @@
     var costSplitSection = document.getElementById("cost-split-section");
     if (costSplitSection) costSplitSection.style.display = level >= 2 ? "" : "none";
 
+    // 方式2以上: 販管費配賦の説明表示
+    var sgaInfo = document.getElementById("sga-alloc-info");
+    if (sgaInfo) sgaInfo.style.display = level >= 2 ? "" : "none";
+
     document.body.dataset.calcLevel = level;
   }
 
