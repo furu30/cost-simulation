@@ -30,9 +30,11 @@
         material_direct_ratio: 100,       // 材料費の直接費率(%)
         outsourcing_direct_ratio: 100,    // 外注費の直接費率(%)
         shipping_direct_ratio: 100,       // 運送費の直接費率(%)
+        depreciation_direct_ratio: 0,     // 減価償却費の直接費率(%) ※部門機械費に含まれない分
         material_indirect_amount: 0,      // 材料費の間接費分(千円) B案用
         outsourcing_indirect_amount: 0,   // 外注費の間接費分(千円) B案用
-        shipping_indirect_amount: 0       // 運送費の間接費分(千円) B案用
+        shipping_indirect_amount: 0,      // 運送費の間接費分(千円) B案用
+        depreciation_indirect_amount: 0   // 減価償却費の間接費分(千円) B案用
       },
       /** departments テーブル */
       departments: [],
@@ -108,24 +110,28 @@
     // 直間区分設定を適用
     var split = data.costSplitSettings || {};
     var level = cs.calc_level || 1;
-    var materialDirect, outsourcingDirect;
+    var materialDirect, outsourcingDirect, depreciationDirect;
+    var depreciation = mcr.exp_depreciation || 0;
 
     if (level >= 2 && split.split_mode === "amount") {
       // B案: 金額指定 → 直接分 = 全額 − 間接費分
       materialDirect = (mcr.material_cost || 0) - (split.material_indirect_amount || 0);
       outsourcingDirect = (mcr.outsourcing_cost || 0) - (split.outsourcing_indirect_amount || 0);
+      depreciationDirect = depreciation - (split.depreciation_indirect_amount || 0);
     } else if (level >= 2) {
       // A案: 割合指定
       materialDirect = (mcr.material_cost || 0) * ((split.material_direct_ratio != null ? split.material_direct_ratio : 100) / 100);
       outsourcingDirect = (mcr.outsourcing_cost || 0) * ((split.outsourcing_direct_ratio != null ? split.outsourcing_direct_ratio : 100) / 100);
+      depreciationDirect = depreciation * ((split.depreciation_direct_ratio != null ? split.depreciation_direct_ratio : 0) / 100);
     } else {
-      // 方式1: 全額直接扱い
+      // 方式1: 全額直接扱い（減価償却は全額間接）
       materialDirect = mcr.material_cost || 0;
       outsourcingDirect = mcr.outsourcing_cost || 0;
+      depreciationDirect = 0;
     }
 
-    // 製造間接費(千円) = MCR合計 − 直接材料費 − 直接外注費 − 直接人件費
-    var mfgIndirectK = mcrTotal - materialDirect - outsourcingDirect - totalLaborK;
+    // 製造間接費(千円) = MCR合計 − 直接材料費 − 直接外注費 − 直接減価償却費 − 直接人件費
+    var mfgIndirectK = mcrTotal - materialDirect - outsourcingDirect - depreciationDirect - totalLaborK;
 
     // 販管費(千円): 運送費の直接分のみ控除(freight ON時)
     var shippingTotal = cs.enable_freight_cost ? (pl.sga_shipping || 0) : 0;
@@ -433,12 +439,8 @@
   function syncFreightToggle(data) {
     var toggle = document.getElementById("freight-toggle");
     var statusEl = document.getElementById("freight-status");
-    var rateField = document.getElementById("freight-rate-field");
-    var rateInput = document.getElementById("freight-rate");
     toggle.checked = data.companySettings.enable_freight_cost;
-    rateInput.value = data.companySettings.freight_rate_per_unit || 0;
     statusEl.textContent = toggle.checked ? "ON" : "OFF";
-    rateField.style.display = toggle.checked ? "flex" : "none";
     // P&L運送費行の表示切替
     var plShipRow = document.getElementById("pl-shipping-row");
     if (plShipRow) plShipRow.style.display = toggle.checked ? "" : "none";
@@ -447,8 +449,6 @@
   function initFreightToggle() {
     var toggle = document.getElementById("freight-toggle");
     var statusEl = document.getElementById("freight-status");
-    var rateField = document.getElementById("freight-rate-field");
-    var rateInput = document.getElementById("freight-rate");
 
     syncFreightToggle(loadData());
 
@@ -457,18 +457,11 @@
       data.companySettings.enable_freight_cost = toggle.checked;
       saveData(data);
       statusEl.textContent = toggle.checked ? "ON" : "OFF";
-      rateField.style.display = toggle.checked ? "flex" : "none";
       // P&L運送費行の表示切替
       var plShipRow = document.getElementById("pl-shipping-row");
       if (plShipRow) plShipRow.style.display = toggle.checked ? "" : "none";
       // 間接費を再計算して更新
       if (window.CostApp.baseData) window.CostApp.baseData.load();
-    });
-
-    rateInput.addEventListener("change", function() {
-      var data = loadData();
-      data.companySettings.freight_rate_per_unit = parseFloat(rateInput.value) || 0;
-      saveData(data);
     });
   }
 

@@ -102,11 +102,6 @@
     html += '<label>直接材料費(円/個) *</label><input type="number" class="pf-material input-num" value="' + (p.direct_material_cost || 0) + '">';
     html += '<label>直接外注費(円/個)</label><input type="number" class="pf-outsource input-num" value="' + (p.direct_outsourcing_cost || 0) + '">';
     html += '<label>特約運送費・直課経費(円)</label><input type="number" class="pf-special input-num" value="' + (p.special_direct_expense || 0) + '">';
-
-    if (cs.enable_freight_cost) {
-      html += '<label>製品重量(kg)</label><input type="number" class="pf-weight input-num" step="0.01" value="' + (p.freight_weight || 0) + '">';
-      html += '<label></label><span class="text-muted" style="font-size:12px">× ' + app.formatNum(cs.freight_rate_per_unit) + ' 円/kg = ' + app.formatYen((p.freight_weight || 0) * cs.freight_rate_per_unit) + ' 円</span>';
-    }
     html += '</div>';
 
     // ルーティングテーブル
@@ -141,9 +136,6 @@
     }
     if (cost.specialExpense > 0) {
       html += '<div class="cost-line"><span>特約運送費・直課経費</span><span>' + app.formatYen(cost.specialExpense) + ' 円</span></div>';
-    }
-    if (cost.freightCost > 0) {
-      html += '<div class="cost-line"><span>運送費（配賦）</span><span>' + app.formatYen(cost.freightCost) + ' 円</span></div>';
     }
 
     if (level === 1) {
@@ -294,11 +286,8 @@
       target_sales_price: parseFloat(card.querySelector(".pf-price").value) || 0,
       direct_material_cost: parseFloat(card.querySelector(".pf-material").value) || 0,
       direct_outsourcing_cost: parseFloat(card.querySelector(".pf-outsource").value) || 0,
-      special_direct_expense: parseFloat(card.querySelector(".pf-special").value) || 0,
-      freight_weight: 0
+      special_direct_expense: parseFloat(card.querySelector(".pf-special").value) || 0
     };
-    var weightEl = card.querySelector(".pf-weight");
-    if (weightEl) result.freight_weight = parseFloat(weightEl.value) || 0;
     return result;
   }
 

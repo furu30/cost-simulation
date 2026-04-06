@@ -228,13 +228,7 @@
       totalProcessCost += cost;
     });
 
-    // 運送費
-    var freightCost = 0;
-    if (cs.enable_freight_cost && product.freight_weight > 0) {
-      freightCost = product.freight_weight * (cs.freight_rate_per_unit || 0);
-    }
-
-    var totalCost = materialCost + totalProcessCost + outsourcingCost + specialExpense + freightCost;
+    var totalCost = materialCost + totalProcessCost + outsourcingCost + specialExpense;
     var sellingPrice = product.target_sales_price || 0;
     var operatingProfit = sellingPrice - totalCost;
     var operatingProfitRate = sellingPrice > 0 ? operatingProfit / sellingPrice * 100 : 0;
@@ -250,7 +244,7 @@
         totalIndirectProcess: 0,
         outsourcingCost: outsourcingCost,
         specialExpense: specialExpense,
-        freightCost: freightCost,
+        freightCost: 0,
         totalCost: totalCost,
         sellingPrice: sellingPrice,
         operatingProfit: operatingProfit,
@@ -267,7 +261,7 @@
     }
 
     // 方式2: 直間分離あり → 限界利益算出可能
-    var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense + freightCost;
+    var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense;
     var marginalProfit = sellingPrice - directCostTotal;
     var marginalProfitRate = sellingPrice > 0 ? marginalProfit / sellingPrice * 100 : 0;
 
@@ -280,7 +274,7 @@
       totalIndirectProcess: totalIndirectProcess,
       outsourcingCost: outsourcingCost,
       specialExpense: specialExpense,
-      freightCost: freightCost,
+      freightCost: 0,
       totalCost: totalCost,
       sellingPrice: sellingPrice,
       operatingProfit: operatingProfit,
@@ -333,12 +327,7 @@
     });
 
     // 運送費
-    var freightCost = 0;
-    if (cs.enable_freight_cost && product.freight_weight > 0) {
-      freightCost = product.freight_weight * (cs.freight_rate_per_unit || 0);
-    }
-
-    var totalCost = materialCost + totalProcessCost + outsourcingCost + specialExpense + freightCost;
+    var totalCost = materialCost + totalProcessCost + outsourcingCost + specialExpense;
     var sellingPrice = product.target_sales_price || 0;
     var operatingProfit = sellingPrice - totalCost;
     var operatingProfitRate = sellingPrice > 0 ? operatingProfit / sellingPrice * 100 : 0;
@@ -350,7 +339,7 @@
       totalProcessCost: totalProcessCost,
       outsourcingCost: outsourcingCost,
       specialExpense: specialExpense,
-      freightCost: freightCost,
+      freightCost: 0,
       totalCost: totalCost,
       sellingPrice: sellingPrice,
       operatingProfit: operatingProfit,
@@ -359,7 +348,7 @@
 
     // 方式3/4: 限界利益
     if (calcLevel >= 3) {
-      var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense + freightCost;
+      var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense;
       var marginalProfit = sellingPrice - directCostTotal;
       var marginalProfitRate = sellingPrice > 0 ? marginalProfit / sellingPrice * 100 : 0;
       result.directCostTotal = directCostTotal;
