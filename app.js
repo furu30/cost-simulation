@@ -29,8 +29,10 @@
         split_mode: "ratio",              // "ratio" = A案(%), "amount" = B案(金額)
         material_direct_ratio: 100,       // 材料費の直接費率(%)
         outsourcing_direct_ratio: 100,    // 外注費の直接費率(%)
+        shipping_direct_ratio: 100,       // 運送費の直接費率(%)
         material_indirect_amount: 0,      // 材料費の間接費分(千円) B案用
-        outsourcing_indirect_amount: 0    // 外注費の間接費分(千円) B案用
+        outsourcing_indirect_amount: 0,   // 外注費の間接費分(千円) B案用
+        shipping_indirect_amount: 0       // 運送費の間接費分(千円) B案用
       },
       /** departments テーブル */
       departments: [],
@@ -125,8 +127,19 @@
     // 製造間接費(千円) = MCR合計 − 直接材料費 − 直接外注費 − 直接人件費
     var mfgIndirectK = mcrTotal - materialDirect - outsourcingDirect - totalLaborK;
 
-    // 販管費(千円): 運送費控除(freight ON時のみ)
-    var freightDeduction = cs.enable_freight_cost ? (pl.sga_shipping || 0) : 0;
+    // 販管費(千円): 運送費の直接分のみ控除(freight ON時)
+    var shippingTotal = cs.enable_freight_cost ? (pl.sga_shipping || 0) : 0;
+    var shippingDirect = 0;
+    if (shippingTotal > 0 && level >= 2) {
+      if (split.split_mode === "amount") {
+        shippingDirect = shippingTotal - (split.shipping_indirect_amount || 0);
+      } else {
+        shippingDirect = shippingTotal * ((split.shipping_direct_ratio != null ? split.shipping_direct_ratio : 100) / 100);
+      }
+    } else {
+      shippingDirect = shippingTotal; // 方式1または未設定: 全額直接
+    }
+    var freightDeduction = shippingDirect;
     var sgaNetK = (pl.sga_total || 0) - freightDeduction;
 
     // 合計(千円)

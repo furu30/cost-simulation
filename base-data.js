@@ -48,7 +48,7 @@
       toggleCostSplitMode();
       updateSummary();
     });
-    ["split-material-ratio", "split-outsourcing-ratio", "split-material-indirect", "split-outsourcing-indirect"].forEach(function(id) {
+    ["split-material-ratio", "split-outsourcing-ratio", "split-shipping-ratio", "split-material-indirect", "split-outsourcing-indirect", "split-shipping-indirect"].forEach(function(id) {
       document.getElementById(id).addEventListener("input", updateSummary);
     });
 
@@ -79,10 +79,13 @@
     document.getElementById("cost-split-mode").value = split.split_mode || "ratio";
     document.getElementById("split-material-ratio").value = split.material_direct_ratio != null ? split.material_direct_ratio : 100;
     document.getElementById("split-outsourcing-ratio").value = split.outsourcing_direct_ratio != null ? split.outsourcing_direct_ratio : 100;
+    document.getElementById("split-shipping-ratio").value = split.shipping_direct_ratio != null ? split.shipping_direct_ratio : 100;
     document.getElementById("split-material-indirect").value = split.material_indirect_amount || 0;
     document.getElementById("split-outsourcing-indirect").value = split.outsourcing_indirect_amount || 0;
+    document.getElementById("split-shipping-indirect").value = split.shipping_indirect_amount || 0;
     toggleCostSplitMode();
     toggleCostSplitVisibility(cs.calc_level || 1);
+    toggleShippingSplitVisibility(cs.enable_freight_cost);
 
     updateSummary();
   }
@@ -95,6 +98,14 @@
 
   function toggleCostSplitVisibility(level) {
     document.getElementById("cost-split-section").style.display = level >= 2 ? "" : "none";
+  }
+
+  function toggleShippingSplitVisibility(freightOn) {
+    var show = freightOn ? "" : "none";
+    document.getElementById("split-shipping-ratio-label").style.display = show;
+    document.getElementById("split-shipping-ratio").style.display = show;
+    document.getElementById("split-shipping-indirect-label").style.display = show;
+    document.getElementById("split-shipping-indirect").style.display = show;
   }
 
   function save() {
@@ -127,8 +138,10 @@
       split_mode: document.getElementById("cost-split-mode").value,
       material_direct_ratio: parseFloat(document.getElementById("split-material-ratio").value) || 100,
       outsourcing_direct_ratio: parseFloat(document.getElementById("split-outsourcing-ratio").value) || 100,
+      shipping_direct_ratio: parseFloat(document.getElementById("split-shipping-ratio").value) || 100,
       material_indirect_amount: parseFloat(document.getElementById("split-material-indirect").value) || 0,
-      outsourcing_indirect_amount: parseFloat(document.getElementById("split-outsourcing-indirect").value) || 0
+      outsourcing_indirect_amount: parseFloat(document.getElementById("split-outsourcing-indirect").value) || 0,
+      shipping_indirect_amount: parseFloat(document.getElementById("split-shipping-indirect").value) || 0
     };
 
     // 間接費を再計算してから保存
@@ -179,28 +192,46 @@
     // 製造間接費(千円)
     var mfgIndirect = mcrTotal - matDirect - outDirect - totalLaborK;
 
-    // 直間区分サマリー表示
-    var splitSummary = document.getElementById("cost-split-summary");
-    if (level >= 2 && (mat > 0 || outsource > 0)) {
-      var matIndirect = mat - matDirect;
-      var outIndirect = outsource - outDirect;
-      splitSummary.innerHTML =
-        '<span style="font-size:12px">' +
-        '材料費: 直接 <strong>' + app.formatNum(Math.round(matDirect)) + '</strong> 千円 / 間接 <strong>' + app.formatNum(Math.round(matIndirect)) + '</strong> 千円' +
-        '　｜　外注費: 直接 <strong>' + app.formatNum(Math.round(outDirect)) + '</strong> 千円 / 間接 <strong>' + app.formatNum(Math.round(outIndirect)) + '</strong> 千円' +
-        '</span>';
-      splitSummary.style.display = "";
-    } else {
-      splitSummary.style.display = "none";
-    }
-
     // P&L値
     var sales = parseFloat(document.getElementById("pl-sales").value) || 0;
     var sgaTotal = parseFloat(document.getElementById("pl-sga-total").value) || 0;
     var sgaShipping = parseFloat(document.getElementById("pl-sga-shipping").value) || 0;
 
-    // 運送費控除
-    var freightDeduction = cs.enable_freight_cost ? sgaShipping : 0;
+    // 運送費の直間分離
+    var shippingTotal = cs.enable_freight_cost ? sgaShipping : 0;
+    var shipDirect = shippingTotal;
+    if (shippingTotal > 0 && level >= 2) {
+      if (splitMode === "amount") {
+        var shipIndAmt = parseFloat(document.getElementById("split-shipping-indirect").value) || 0;
+        shipDirect = shippingTotal - shipIndAmt;
+      } else {
+        var shipRatio = parseFloat(document.getElementById("split-shipping-ratio").value);
+        if (isNaN(shipRatio)) shipRatio = 100;
+        shipDirect = shippingTotal * shipRatio / 100;
+      }
+    }
+
+    // 直間区分サマリー表示
+    var splitSummary = document.getElementById("cost-split-summary");
+    if (level >= 2 && (mat > 0 || outsource > 0 || shippingTotal > 0)) {
+      var matIndirect = mat - matDirect;
+      var outIndirect = outsource - outDirect;
+      var shipIndirect = shippingTotal - shipDirect;
+      var html = '<span style="font-size:12px">' +
+        '材料費: 直接 <strong>' + app.formatNum(Math.round(matDirect)) + '</strong> / 間接 <strong>' + app.formatNum(Math.round(matIndirect)) + '</strong>' +
+        '　｜　外注費: 直接 <strong>' + app.formatNum(Math.round(outDirect)) + '</strong> / 間接 <strong>' + app.formatNum(Math.round(outIndirect)) + '</strong>';
+      if (shippingTotal > 0) {
+        html += '　｜　運送費: 直接 <strong>' + app.formatNum(Math.round(shipDirect)) + '</strong> / 間接 <strong>' + app.formatNum(Math.round(shipIndirect)) + '</strong>';
+      }
+      html += '（千円）</span>';
+      splitSummary.innerHTML = html;
+      splitSummary.style.display = "";
+    } else {
+      splitSummary.style.display = "none";
+    }
+
+    // 運送費控除（直接分のみ）
+    var freightDeduction = shipDirect;
 
     // 間接費合計(千円)
     var indirectTotalK = Math.max(0, mfgIndirect + sgaTotal - freightDeduction);
