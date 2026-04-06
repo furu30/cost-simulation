@@ -179,10 +179,11 @@
   /**
    * 方式1: 全社統一レートで製品原価計算（直接/間接分離）
    */
-  function calcProductCostLv1(product, lv1Rate, cs, departments) {
+  function calcProductCostLv1(product, lv1Rate, cs, departments, level) {
     var materialCost = product.direct_material_cost || 0;
     var outsourcingCost = product.direct_outsourcing_cost || 0;
     var specialExpense = product.special_direct_expense || 0;
+    var isLv1 = (level || 1) === 1;
 
     var totalProcessCost = 0;
     var totalDirectProcess = 0;
@@ -191,9 +192,7 @@
 
     (product.routings || []).forEach(function(rt) {
       var hours = rt.working_hours || 0;
-      var directCost = hours * lv1Rate.directHourlyRate;
-      var indirectCost = hours * lv1Rate.indirectHourlyRate;
-      var cost = directCost + indirectCost;
+      var cost = hours * lv1Rate.hourlyRate;
 
       // 工程名を実際の部門名から取得（フォールバック: 全社統一）
       var deptName = "全社統一";
@@ -206,21 +205,27 @@
         }
       }
 
-      routingDetails.push({
+      var rd = {
         department_id: rt.department_id,
         dept_name: deptName,
         process_order: rt.process_order,
         working_hours: hours,
         hourlyRate: lv1Rate.hourlyRate,
-        directHourlyRate: lv1Rate.directHourlyRate,
-        indirectHourlyRate: lv1Rate.indirectHourlyRate,
-        cost: cost,
-        directCost: directCost,
-        indirectCost: indirectCost
-      });
+        cost: cost
+      };
+
+      if (!isLv1) {
+        // 方式2: 直間を分離
+        rd.directCost = hours * lv1Rate.directHourlyRate;
+        rd.indirectCost = hours * lv1Rate.indirectHourlyRate;
+        rd.directHourlyRate = lv1Rate.directHourlyRate;
+        rd.indirectHourlyRate = lv1Rate.indirectHourlyRate;
+        totalDirectProcess += rd.directCost;
+        totalIndirectProcess += rd.indirectCost;
+      }
+
+      routingDetails.push(rd);
       totalProcessCost += cost;
-      totalDirectProcess += directCost;
-      totalIndirectProcess += indirectCost;
     });
 
     // 運送費
@@ -234,13 +239,40 @@
     var operatingProfit = sellingPrice - totalCost;
     var operatingProfitRate = sellingPrice > 0 ? operatingProfit / sellingPrice * 100 : 0;
 
-    // 限界利益（直接原価ベース）
+    if (isLv1) {
+      // 方式1: 直間分離しないため、限界利益・製造利益は算出不可
+      return {
+        product: product, calcLevel: 1,
+        materialCost: materialCost,
+        routingDetails: routingDetails,
+        totalProcessCost: totalProcessCost,
+        totalDirectProcess: 0,
+        totalIndirectProcess: 0,
+        outsourcingCost: outsourcingCost,
+        specialExpense: specialExpense,
+        freightCost: freightCost,
+        totalCost: totalCost,
+        sellingPrice: sellingPrice,
+        operatingProfit: operatingProfit,
+        operatingProfitRate: operatingProfitRate,
+        directCostTotal: 0,
+        marginalProfit: 0,
+        marginalProfitRate: 0,
+        mfgIndirectProcess: 0,
+        sgaIndirectProcess: 0,
+        manufacturingCost: 0,
+        manufacturingProfit: 0,
+        manufacturingProfitRate: 0
+      };
+    }
+
+    // 方式2: 直間分離あり → 限界利益算出可能
     var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense + freightCost;
     var marginalProfit = sellingPrice - directCostTotal;
     var marginalProfitRate = sellingPrice > 0 ? marginalProfit / sellingPrice * 100 : 0;
 
     return {
-      product: product, calcLevel: 1,
+      product: product, calcLevel: 2,
       materialCost: materialCost,
       routingDetails: routingDetails,
       totalProcessCost: totalProcessCost,

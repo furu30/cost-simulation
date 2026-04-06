@@ -166,7 +166,7 @@
     products.forEach(function(p) {
       var c;
       if (level <= 2) {
-        c = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts);
+        c = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts, level);
       } else {
         c = app.calcEngine.calcProductCost(p, deptRates, cs, level);
       }
@@ -218,7 +218,7 @@
     products.forEach(function(p, pi) {
       var c;
       if (level <= 2) {
-        c = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts);
+        c = app.calcEngine.calcProductCostLv1(p, lv1Rate, cs, depts, level);
       } else {
         c = app.calcEngine.calcProductCost(p, deptRates, cs, level);
       }
