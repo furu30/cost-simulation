@@ -174,14 +174,30 @@
   // ══ JSON書き出し/読み込み ══
   function initHeaderActions() {
     document.getElementById("btn-reset-data").addEventListener("click", function() {
-      if (!confirm("すべてのデータを削除して初期状態に戻します。よろしいですか？")) return;
+      var data = loadData();
+      var deptCount = data.departments.length;
+      var prodCount = data.products.length;
+      var msg = "すべてのデータを削除して初期状態に戻します。\n\n";
+      if (deptCount || prodCount) {
+        msg += "現在のデータ:\n";
+        if (deptCount) msg += "・部門: " + deptCount + "件\n";
+        if (prodCount) msg += "・製品: " + prodCount + "件\n";
+        msg += "\nこれらはすべて失われます。";
+      }
+      msg += "\n\nよろしいですか？";
+      if (!confirm(msg)) return;
       saveData(defaultData());
       showToast("データを初期化しました", "success");
       reloadAll();
     });
 
     document.getElementById("btn-demo-data").addEventListener("click", function() {
-      if (!confirm("現在のデータをすべて削除し、デモデータを投入します。よろしいですか？")) return;
+      var data = loadData();
+      var hasData = data.departments.length > 0 || data.products.length > 0 || data.companySettings.setting_name;
+      var msg = hasData
+        ? "現在のデータをすべて削除し、デモデータ（5部門・3製品）を投入します。\n既存データは失われます。よろしいですか？"
+        : "デモデータ（5部門・3製品）を投入します。よろしいですか？";
+      if (!confirm(msg)) return;
       saveData(buildDemoData());
       showToast("デモデータを投入しました", "success");
       reloadAll();
@@ -402,16 +418,63 @@
     });
   }
 
+  // ══ Escキーでモーダルを閉じる ══
+  function initEscapeKey() {
+    document.addEventListener("keydown", function(e) {
+      if (e.key !== "Escape") return;
+      // ローディング中は閉じない
+      var loading = document.getElementById("loading-overlay");
+      if (loading && loading.style.display !== "none") return;
+      // 部門モーダル
+      var deptModal = document.getElementById("dept-modal");
+      if (deptModal && deptModal.style.display !== "none") {
+        deptModal.style.display = "none";
+        return;
+      }
+      // オンボーディングモーダル
+      var onboard = document.getElementById("onboarding-modal");
+      if (onboard && onboard.style.display !== "none") {
+        onboard.style.display = "none";
+        return;
+      }
+    });
+  }
+
+  // ══ 初回オンボーディング ══
+  function initOnboarding() {
+    var data = loadData();
+    var cs = data.companySettings;
+    var isEmpty = !cs.setting_name && data.departments.length === 0 && data.products.length === 0 && !cs.common_working_hours;
+    if (!isEmpty) return;
+
+    var modal = document.getElementById("onboarding-modal");
+    if (!modal) return;
+    modal.style.display = "";
+
+    document.getElementById("btn-onboarding-demo").addEventListener("click", function() {
+      modal.style.display = "none";
+      // デモデータボタンのクリックをシミュレート
+      var btnDemo = document.getElementById("btn-demo-data");
+      if (btnDemo) btnDemo.click();
+    });
+    document.getElementById("btn-onboarding-skip").addEventListener("click", function() {
+      modal.style.display = "none";
+    });
+  }
+
   // ══ 初期化 ══
   document.addEventListener("DOMContentLoaded", function() {
     initTabs();
     initHeaderActions();
     initLevelSelector();
     initFreightToggle();
+    initEscapeKey();
 
     if (window.CostApp.baseData) window.CostApp.baseData.init();
     if (window.CostApp.deptCost) window.CostApp.deptCost.init();
     if (window.CostApp.productCost) window.CostApp.productCost.init();
+
+    initOnboarding();
   });
 
   // ══ 公開API ══

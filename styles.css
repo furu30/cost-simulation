@@ -743,3 +743,118 @@ input:focus, select:focus, textarea:focus {
     width: 100%;
   }
 }
+
+.guide-screenshot {
+  margin: 12px 0 20px;
+  text-align: center;
+}
+.guide-screenshot img {
+  max-width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ── tabular-nums 統一 ── */
+.input-num,
+.cost-result,
+.profit-box .profit-value,
+.data-table td,
+.summary-row,
+.dept-card-body .value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── フッター ── */
+.app-footer {
+  margin-top: 40px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-strong);
+  background: #f1f5f9;
+}
+.footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.footer-version {
+  background: var(--primary);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.footer-note {
+  margin-left: auto;
+}
+@media (max-width: 768px) {
+  .footer-note { margin-left: 0; }
+}
+
+/* ── ローディングオーバーレイ ── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.85);
+  display: grid;
+  place-items: center;
+  z-index: 300;
+}
+.loading-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-content p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ── オンボーディングモーダル ── */
+.onboarding-modal {
+  text-align: center;
+  max-width: 520px;
+}
+.onboarding-modal h2 {
+  border-bottom: none;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+.onboarding-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 36px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+}
+.onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}

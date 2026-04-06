@@ -307,11 +307,14 @@
   }
 
   function deleteProduct(idx) {
-    if (!confirm("この製品を削除しますか？")) return;
     var data = app.loadData();
+    var p = data.products[idx];
+    if (!p) return;
+    var name = p.product_name || p.product_code || "この製品";
+    if (!confirm("「" + name + "」を削除しますか？\nこの操作は元に戻せません。")) return;
     data.products.splice(idx, 1);
     app.saveData(data);
-    app.showToast("製品を削除しました", "success");
+    app.showToast("製品「" + name + "」を削除しました", "success");
     load();
   }
 

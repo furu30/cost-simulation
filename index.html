@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>製品原価シミュレーション</title>
+  <title>製品原価シミュレーション | 無料の製造業向け原価計算ツール</title>
+  <meta name="description" content="製造業の製品原価をブラウザだけで簡単シミュレーション。4つの原価計算方式に対応し、部門別アワーレートの自動計算、利益分析、Excel/PDF出力まで完結。登録不要・無料。">
+  <meta name="keywords" content="原価計算,製造業,アワーレート,原価シミュレーション,製品原価,部門別原価,間接費配賦,無料ツール">
+  <meta name="author" content="RS Consulting">
+  <meta property="og:title" content="製品原価シミュレーション | 無料の製造業向け原価計算ツール">
+  <meta property="og:description" content="4つの原価計算方式で製品1個あたりの原価を即シミュレーション。部門別アワーレート自動計算、3つの利益ライン分析、Excel/PDF出力対応。登録不要・完全無料。">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="img/ogp.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="製品原価シミュレーション | 無料の製造業向け原価計算ツール">
+  <meta name="twitter:description" content="製造業の製品原価をブラウザだけで簡単シミュレーション。4つの計算方式対応、登録不要・無料。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='12' width='100' height='100' fill='%232563eb'/><text x='50' y='68' text-anchor='middle' font-size='52' font-weight='700' fill='white'>¥</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
@@ -506,8 +518,41 @@
     </div>
   </div>
 
+  <!-- ローディングオーバーレイ -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p id="loading-message">処理中...</p>
+    </div>
+  </div>
+
+  <!-- 初回オンボーディングモーダル -->
+  <div id="onboarding-modal" class="modal-overlay" style="display:none">
+    <div class="modal onboarding-modal">
+      <div class="onboarding-icon">¥</div>
+      <h2>製品原価シミュレーションへようこそ</h2>
+      <p style="color:var(--text-muted);font-size:14px;line-height:1.8;margin-bottom:20px">
+        製造業の製品1個あたりの原価を、ブラウザだけで簡単にシミュレーションできるツールです。<br>
+        まずはデモデータで操作感をお試しください。
+      </p>
+      <div class="onboarding-actions">
+        <button id="btn-onboarding-demo" class="btn btn-primary" style="padding:10px 28px;font-size:15px">デモデータで体験する</button>
+        <button id="btn-onboarding-skip" class="btn btn-outline" style="padding:10px 28px;font-size:14px">新規で始める</button>
+      </div>
+    </div>
+  </div>
+
   <!-- トースト通知 -->
   <div id="toast-container"></div>
+
+  <!-- フッター -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <span class="footer-version">v1.1</span>
+      <span class="footer-copy">&copy; 2025 RS Consulting</span>
+      <span class="footer-note">データはブラウザに保存されます（サーバー送信なし）</span>
+    </div>
+  </footer>
 
   <!-- CDN: Excel & PDF出力 -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>

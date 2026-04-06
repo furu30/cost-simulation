@@ -478,6 +478,7 @@
         var name = (cs.setting_name || "原価シミュレーション").replace(/[\/\\?*[\]]/g, "_");
         pdf.save(name + ".pdf");
         app.showToast("PDFファイルを出力しました", "success");
+        hideLoading();
       }
 
       processNext();
@@ -488,11 +489,36 @@
   //  初期化
   // ════════════════════════════════════════════════════
 
+  function showLoading(msg) {
+    var overlay = document.getElementById("loading-overlay");
+    var msgEl = document.getElementById("loading-message");
+    if (msgEl) msgEl.textContent = msg || "処理中...";
+    if (overlay) overlay.style.display = "";
+  }
+  function hideLoading() {
+    var overlay = document.getElementById("loading-overlay");
+    if (overlay) overlay.style.display = "none";
+  }
+
+  function safeExportExcel() {
+    showLoading("Excel生成中...");
+    setTimeout(function() {
+      try { exportExcel(); }
+      catch(e) { app.showToast("Excel出力に失敗しました: " + e.message, "error"); }
+      finally { hideLoading(); }
+    }, 50);
+  }
+
+  function safeExportPdf() {
+    showLoading("PDF生成中...");
+    exportPdf();
+  }
+
   function init() {
     var btnExcel = document.getElementById("btn-export-excel");
     var btnPdf = document.getElementById("btn-export-pdf");
-    if (btnExcel) btnExcel.addEventListener("click", exportExcel);
-    if (btnPdf) btnPdf.addEventListener("click", exportPdf);
+    if (btnExcel) btnExcel.addEventListener("click", safeExportExcel);
+    if (btnPdf) btnPdf.addEventListener("click", safeExportPdf);
   }
 
   document.addEventListener("DOMContentLoaded", init);

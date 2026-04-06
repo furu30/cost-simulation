@@ -72,8 +72,15 @@
 
     // 全社設定
     data.companySettings.setting_name = document.getElementById(csIdMap.setting_name).value.trim();
-    data.companySettings.common_working_hours = parseInt(document.getElementById(csIdMap.common_working_hours).value) || 0;
+    var hours = parseInt(document.getElementById(csIdMap.common_working_hours).value) || 0;
     data.companySettings.allocation_base_type = document.getElementById(csIdMap.allocation_base_type).value;
+
+    // バリデーション
+    if (hours > 0 && (hours < 100 || hours > 4000)) {
+      app.showToast("年間労働時間は100〜4,000時間の範囲で入力してください", "error");
+      return;
+    }
+    data.companySettings.common_working_hours = hours;
 
     // P&L
     plFields.forEach(function(f) {

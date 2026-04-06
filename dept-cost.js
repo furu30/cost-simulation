@@ -220,15 +220,39 @@
       return;
     }
 
+    var workerCount = parseInt(document.getElementById("dept-worker-count").value) || 0;
+    var laborCost = parseFloat(document.getElementById("dept-annual-labor-cost").value) || 0;
+    var isMachine = document.getElementById("dept-is-machine-based").value === "true";
+    var machineCount = parseInt(document.getElementById("dept-machine-count").value) || 0;
+    var machineHours = parseInt(document.getElementById("dept-machine-hours").value) || 0;
+
+    // バリデーション
+    if (workerCount <= 0) {
+      app.showToast("直接作業者数は1人以上を入力してください", "error");
+      return;
+    }
+    if (laborCost <= 0) {
+      app.showToast("作業者年間人件費を入力してください", "error");
+      return;
+    }
+    if (isMachine && machineCount <= 0) {
+      app.showToast("機械主体の場合、設備台数を1台以上入力してください", "error");
+      return;
+    }
+    if (isMachine && machineHours <= 0) {
+      app.showToast("機械主体の場合、1台あたり稼働時間を入力してください", "error");
+      return;
+    }
+
     var dept = {
       department_name: name,
-      worker_count: parseInt(document.getElementById("dept-worker-count").value) || 0,
-      annual_labor_cost: parseFloat(document.getElementById("dept-annual-labor-cost").value) || 0,
+      worker_count: workerCount,
+      annual_labor_cost: laborCost,
       allocation_base_value: parseFloat(document.getElementById("dept-alloc-value").value) || 0,
-      is_machine_based: document.getElementById("dept-is-machine-based").value === "true",
+      is_machine_based: isMachine,
       standard_machine_cost: parseFloat(document.getElementById("dept-machine-cost").value) || 0,
-      machine_count: parseInt(document.getElementById("dept-machine-count").value) || 0,
-      machine_operating_hours: parseInt(document.getElementById("dept-machine-hours").value) || 0
+      machine_count: machineCount,
+      machine_operating_hours: machineHours
     };
 
     var data = app.loadData();
@@ -250,11 +274,30 @@
   }
 
   function removeDept(idx) {
-    if (!confirm("この部門を削除しますか？")) return;
     var data = app.loadData();
+    var dept = data.departments[idx];
+    if (!dept) return;
+    // 影響する製品を検出
+    var affected = [];
+    data.products.forEach(function(p) {
+      if (p.routings && p.routings.some(function(r) { return r.department_id === dept.id; })) {
+        affected.push(p.product_name || p.product_code);
+      }
+    });
+    var msg = "「" + dept.department_name + "」を削除しますか？";
+    if (affected.length > 0) {
+      msg += "\n\n※ 以下の製品のルーティングからも削除されます:\n・" + affected.join("\n・");
+    }
+    if (!confirm(msg)) return;
+    // ルーティングからも削除
+    data.products.forEach(function(p) {
+      if (p.routings) {
+        p.routings = p.routings.filter(function(r) { return r.department_id !== dept.id; });
+      }
+    });
     data.departments.splice(idx, 1);
     app.saveData(data);
-    app.showToast("部門を削除しました", "success");
+    app.showToast("部門「" + dept.department_name + "」を削除しました", "success");
     load();
   }
 
