@@ -43,6 +43,15 @@
       document.getElementById(mcrIdMap[f]).addEventListener("input", updateSummary);
     });
 
+    // 直間区分
+    document.getElementById("cost-split-mode").addEventListener("change", function() {
+      toggleCostSplitMode();
+      updateSummary();
+    });
+    ["split-material-ratio", "split-outsourcing-ratio", "split-material-indirect", "split-outsourcing-indirect"].forEach(function(id) {
+      document.getElementById(id).addEventListener("input", updateSummary);
+    });
+
     load();
   }
 
@@ -64,7 +73,28 @@
     mcrFields.forEach(function(f) {
       document.getElementById(mcrIdMap[f]).value = data.mcrData[f] || 0;
     });
+
+    // 直間区分
+    var split = data.costSplitSettings || {};
+    document.getElementById("cost-split-mode").value = split.split_mode || "ratio";
+    document.getElementById("split-material-ratio").value = split.material_direct_ratio != null ? split.material_direct_ratio : 100;
+    document.getElementById("split-outsourcing-ratio").value = split.outsourcing_direct_ratio != null ? split.outsourcing_direct_ratio : 100;
+    document.getElementById("split-material-indirect").value = split.material_indirect_amount || 0;
+    document.getElementById("split-outsourcing-indirect").value = split.outsourcing_indirect_amount || 0;
+    toggleCostSplitMode();
+    toggleCostSplitVisibility(cs.calc_level || 1);
+
     updateSummary();
+  }
+
+  function toggleCostSplitMode() {
+    var mode = document.getElementById("cost-split-mode").value;
+    document.getElementById("cost-split-ratio").style.display = mode === "ratio" ? "" : "none";
+    document.getElementById("cost-split-amount").style.display = mode === "amount" ? "" : "none";
+  }
+
+  function toggleCostSplitVisibility(level) {
+    document.getElementById("cost-split-section").style.display = level >= 2 ? "" : "none";
   }
 
   function save() {
@@ -92,6 +122,15 @@
       data.mcrData[f] = parseFloat(document.getElementById(mcrIdMap[f]).value) || 0;
     });
 
+    // 直間区分
+    data.costSplitSettings = {
+      split_mode: document.getElementById("cost-split-mode").value,
+      material_direct_ratio: parseFloat(document.getElementById("split-material-ratio").value) || 100,
+      outsourcing_direct_ratio: parseFloat(document.getElementById("split-outsourcing-ratio").value) || 100,
+      material_indirect_amount: parseFloat(document.getElementById("split-material-indirect").value) || 0,
+      outsourcing_indirect_amount: parseFloat(document.getElementById("split-outsourcing-indirect").value) || 0
+    };
+
     // 間接費を再計算してから保存
     data.companySettings.common_indirect_expenses = app.calcAutoIndirect(data);
     app.saveData(data);
@@ -112,11 +151,48 @@
     // 部門の直接人件費合計(千円変換) — 保存済みデータから取得
     var data = app.loadData();
     var depts = data.departments || [];
+    var cs = data.companySettings || {};
+    var level = cs.calc_level || 1;
     var totalLaborK = 0;
     depts.forEach(function(d) { totalLaborK += (d.annual_labor_cost || 0) / 1000; });
 
+    // 直間区分を適用
+    var splitMode = document.getElementById("cost-split-mode").value;
+    var matDirect, outDirect;
+    if (level >= 2 && splitMode === "amount") {
+      var matIndAmt = parseFloat(document.getElementById("split-material-indirect").value) || 0;
+      var outIndAmt = parseFloat(document.getElementById("split-outsourcing-indirect").value) || 0;
+      matDirect = mat - matIndAmt;
+      outDirect = outsource - outIndAmt;
+    } else if (level >= 2) {
+      var matRatio = parseFloat(document.getElementById("split-material-ratio").value);
+      var outRatio = parseFloat(document.getElementById("split-outsourcing-ratio").value);
+      if (isNaN(matRatio)) matRatio = 100;
+      if (isNaN(outRatio)) outRatio = 100;
+      matDirect = mat * matRatio / 100;
+      outDirect = outsource * outRatio / 100;
+    } else {
+      matDirect = mat;
+      outDirect = outsource;
+    }
+
     // 製造間接費(千円)
-    var mfgIndirect = mcrTotal - mat - outsource - totalLaborK;
+    var mfgIndirect = mcrTotal - matDirect - outDirect - totalLaborK;
+
+    // 直間区分サマリー表示
+    var splitSummary = document.getElementById("cost-split-summary");
+    if (level >= 2 && (mat > 0 || outsource > 0)) {
+      var matIndirect = mat - matDirect;
+      var outIndirect = outsource - outDirect;
+      splitSummary.innerHTML =
+        '<span style="font-size:12px">' +
+        '材料費: 直接 <strong>' + app.formatNum(Math.round(matDirect)) + '</strong> 千円 / 間接 <strong>' + app.formatNum(Math.round(matIndirect)) + '</strong> 千円' +
+        '　｜　外注費: 直接 <strong>' + app.formatNum(Math.round(outDirect)) + '</strong> 千円 / 間接 <strong>' + app.formatNum(Math.round(outIndirect)) + '</strong> 千円' +
+        '</span>';
+      splitSummary.style.display = "";
+    } else {
+      splitSummary.style.display = "none";
+    }
 
     // P&L値
     var sales = parseFloat(document.getElementById("pl-sales").value) || 0;
@@ -124,7 +200,6 @@
     var sgaShipping = parseFloat(document.getElementById("pl-sga-shipping").value) || 0;
 
     // 運送費控除
-    var cs = data.companySettings;
     var freightDeduction = cs.enable_freight_cost ? sgaShipping : 0;
 
     // 間接費合計(千円)
@@ -140,7 +215,6 @@
 
     // ── 全社設定サマリー（方式1のみ表示） ──
     var csSummary = document.getElementById("cs-summary");
-    var level = cs.calc_level || 1;
     if (level === 1 && hours > 0 && depts.length > 0) {
       var lv1 = app.calcEngine.calcLv1Rate(tempCs, depts);
       csSummary.innerHTML =
@@ -168,8 +242,8 @@
       html += "<br><span style='font-size:11px'>" +
         "① 製造間接費: <strong>" + app.formatNum(Math.round(mfgIndirect)) + "</strong> 千円" +
         "（製造原価合計 " + app.formatNum(Math.round(mcrTotal)) +
-        " − 材料 " + app.formatNum(Math.round(mat)) +
-        " − 外注 " + app.formatNum(Math.round(outsource)) +
+        " − 直接材料 " + app.formatNum(Math.round(matDirect)) +
+        " − 直接外注 " + app.formatNum(Math.round(outDirect)) +
         " − 直接人件費 " + app.formatNum(Math.round(totalLaborK)) + "）" +
         "<br>② 販管費: <strong>" + app.formatNum(Math.round(sgaNetK)) + "</strong> 千円";
       if (freightDeduction > 0) {

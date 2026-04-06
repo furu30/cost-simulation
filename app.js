@@ -24,6 +24,14 @@
         outsourcing_cost: 0, exp_depreciation: 0, exp_consumables: 0, exp_repairs: 0,
         exp_lease: 0, exp_utilities: 0, exp_taxes: 0, exp_rent: 0, exp_other: 0
       },
+      /** 直間区分設定（方式2以上で使用） */
+      costSplitSettings: {
+        split_mode: "ratio",              // "ratio" = A案(%), "amount" = B案(金額)
+        material_direct_ratio: 100,       // 材料費の直接費率(%)
+        outsourcing_direct_ratio: 100,    // 外注費の直接費率(%)
+        material_indirect_amount: 0,      // 材料費の間接費分(千円) B案用
+        outsourcing_indirect_amount: 0    // 外注費の間接費分(千円) B案用
+      },
       /** departments テーブル */
       departments: [],
       /** products テーブル + product_routings */
@@ -49,6 +57,11 @@
       // 後方互換: 配賦基準区分を全社設定にマイグレーション
       if (!d.companySettings.allocation_base_type && d.departments && d.departments.length > 0) {
         d.companySettings.allocation_base_type = d.departments[0].allocation_base_type || "worker_count";
+      }
+      // 後方互換: costSplitSettings
+      if (!d.costSplitSettings) d.costSplitSettings = def.costSplitSettings;
+      for (var ck in def.costSplitSettings) {
+        if (d.costSplitSettings[ck] === undefined) d.costSplitSettings[ck] = def.costSplitSettings[ck];
       }
       // 後方互換: 旧P&Lフィールドを sga_total にマイグレーション
       if (d.plData && d.plData.sga_total === undefined) {
@@ -90,8 +103,27 @@
     var totalLaborK = 0;
     depts.forEach(function(d) { totalLaborK += (d.annual_labor_cost || 0) / 1000; });
 
-    // 製造間接費(千円)
-    var mfgIndirectK = mcrTotal - (mcr.material_cost || 0) - (mcr.outsourcing_cost || 0) - totalLaborK;
+    // 直間区分設定を適用
+    var split = data.costSplitSettings || {};
+    var level = cs.calc_level || 1;
+    var materialDirect, outsourcingDirect;
+
+    if (level >= 2 && split.split_mode === "amount") {
+      // B案: 金額指定 → 直接分 = 全額 − 間接費分
+      materialDirect = (mcr.material_cost || 0) - (split.material_indirect_amount || 0);
+      outsourcingDirect = (mcr.outsourcing_cost || 0) - (split.outsourcing_indirect_amount || 0);
+    } else if (level >= 2) {
+      // A案: 割合指定
+      materialDirect = (mcr.material_cost || 0) * ((split.material_direct_ratio != null ? split.material_direct_ratio : 100) / 100);
+      outsourcingDirect = (mcr.outsourcing_cost || 0) * ((split.outsourcing_direct_ratio != null ? split.outsourcing_direct_ratio : 100) / 100);
+    } else {
+      // 方式1: 全額直接扱い
+      materialDirect = mcr.material_cost || 0;
+      outsourcingDirect = mcr.outsourcing_cost || 0;
+    }
+
+    // 製造間接費(千円) = MCR合計 − 直接材料費 − 直接外注費 − 直接人件費
+    var mfgIndirectK = mcrTotal - materialDirect - outsourcingDirect - totalLaborK;
 
     // 販管費(千円): 運送費控除(freight ON時のみ)
     var freightDeduction = cs.enable_freight_cost ? (pl.sga_shipping || 0) : 0;
@@ -360,6 +392,10 @@
     // 方式4: 機械設備セクション表示
     var machineSection = document.getElementById("machine-section");
     if (machineSection) machineSection.style.display = level >= 4 ? "block" : "none";
+
+    // 方式2以上: 直間区分セクション表示
+    var costSplitSection = document.getElementById("cost-split-section");
+    if (costSplitSection) costSplitSection.style.display = level >= 2 ? "" : "none";
 
     document.body.dataset.calcLevel = level;
   }

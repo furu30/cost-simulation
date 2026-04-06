@@ -152,6 +152,31 @@
           <label>外注加工費（千円）</label>
           <input type="number" id="mcr-outsourcing" class="input-num" step="1">
         </div>
+        <!-- 直間区分（方式2以上で表示） -->
+        <div id="cost-split-section" style="display:none">
+          <h3>直接費・間接費の区分 <span class="text-muted" style="font-size:11px;font-weight:400">※方式2以上で有効</span></h3>
+          <div style="margin-bottom:8px">
+            <label style="font-size:13px;color:var(--text-muted)">指定方式：</label>
+            <select id="cost-split-mode" style="font-size:13px;padding:4px 8px">
+              <option value="ratio">割合（%）で指定</option>
+              <option value="amount">金額（千円）で指定</option>
+            </select>
+          </div>
+          <div id="cost-split-ratio" class="form-grid">
+            <label>材料費 直接費率（%）</label>
+            <input type="number" id="split-material-ratio" class="input-num" min="0" max="100" step="1" value="100">
+            <label>外注費 直接費率（%）</label>
+            <input type="number" id="split-outsourcing-ratio" class="input-num" min="0" max="100" step="1" value="100">
+          </div>
+          <div id="cost-split-amount" class="form-grid" style="display:none">
+            <label>材料費 うち間接費分（千円）</label>
+            <input type="number" id="split-material-indirect" class="input-num" step="1" value="0">
+            <label>外注費 うち間接費分（千円）</label>
+            <input type="number" id="split-outsourcing-indirect" class="input-num" step="1" value="0">
+          </div>
+          <div class="summary-row" id="cost-split-summary" style="margin-top:4px"></div>
+        </div>
+
         <h3>経費 <span class="text-muted" style="font-size:11px;font-weight:400">※減価償却費は部門の機械装置費用に含まれない分を入力</span></h3>
         <div class="form-grid">
           <label>減価償却費（千円）</label>
