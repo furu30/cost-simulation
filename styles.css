@@ -300,6 +300,12 @@ input:focus, select:focus, textarea:focus {
   font-weight: 500;
   text-align: right;
 }
+.dept-labor-row {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
 
 /* ── 製品カード ── */
 .product-card {
