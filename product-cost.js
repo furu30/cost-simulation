@@ -101,7 +101,7 @@
     html += '<label>目標販売価格(円)</label><input type="number" class="pf-price input-num" value="' + (p.target_sales_price || 0) + '">';
     html += '<label>直接材料費(円/個) *</label><input type="number" class="pf-material input-num" value="' + (p.direct_material_cost || 0) + '">';
     html += '<label>直接外注費(円/個)</label><input type="number" class="pf-outsource input-num" value="' + (p.direct_outsourcing_cost || 0) + '">';
-    html += '<label>特約運送費・直課経費(円)</label><input type="number" class="pf-special input-num" value="' + (p.special_direct_expense || 0) + '">';
+    html += '<label>直接運送費(円)</label><input type="number" class="pf-special input-num" value="' + (p.special_direct_expense || 0) + '">';
     html += '</div>';
 
     // ルーティングテーブル
@@ -135,7 +135,7 @@
       html += '<div class="cost-line"><span>' + (level === 1 ? '外注費' : '直接外注費') + '</span><span>' + app.formatYen(cost.outsourcingCost) + ' 円</span></div>';
     }
     if (cost.specialExpense > 0) {
-      html += '<div class="cost-line"><span>特約運送費・直課経費</span><span>' + app.formatYen(cost.specialExpense) + ' 円</span></div>';
+      html += '<div class="cost-line"><span>直接運送費</span><span>' + app.formatYen(cost.specialExpense) + ' 円</span></div>';
     }
 
     if (level === 1) {

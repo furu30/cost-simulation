@@ -247,7 +247,7 @@
       rows.push(["直接材料費", Math.round(c.materialCost)]);
       rows.push(["直接加工費", Math.round(c.totalDirectProcess || 0)]);
       if (c.outsourcingCost > 0) rows.push(["直接外注費", Math.round(c.outsourcingCost)]);
-      if (c.specialExpense > 0) rows.push(["特約運送費・直課経費", Math.round(c.specialExpense)]);
+      if (c.specialExpense > 0) rows.push(["直接運送費", Math.round(c.specialExpense)]);
       if (c.freightCost > 0) rows.push(["運送費（配賦）", Math.round(c.freightCost)]);
       rows.push(["▶ 直接原価", Math.round(c.directCostTotal || 0)]);
       rows.push(["＋ 製造間接費", Math.round(c.mfgIndirectProcess || 0)]);
