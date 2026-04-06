@@ -90,7 +90,7 @@
     html += '<h3>' + app.escHtml(p.product_code || "") + ' ' + app.escHtml(p.product_name) + '</h3>';
     html += '<div>';
     html += '<button class="btn btn-sm prod-save" data-idx="' + idx + '">保存</button> ';
-    html += '<button class="btn-icon text-danger prod-delete" data-idx="' + idx + '" title="削除">&#10005;</button>';
+    html += '<button class="btn-sm text-danger prod-delete" data-idx="' + idx + '" title="この製品を削除">削除</button>';
     html += '</div>';
     html += '</div>';
 
@@ -114,9 +114,9 @@
     html += '<table class="data-table compact">';
 
     if (level === 1) {
-      html += '<thead><tr><th>工順</th><th>工程</th><th>作業時間(h/個)</th><th>レート(円/h)</th><th>加工費</th><th></th></tr></thead>';
+      html += '<thead><tr><th>工順</th><th>工程</th><th>作業時間(h/個)</th><th>レート(円/h)</th><th>加工費</th><th>削除</th></tr></thead>';
     } else {
-      html += '<thead><tr><th>工順</th><th>工程</th><th>作業時間(h/個)</th><th>直接レート</th><th>間接レート</th><th>加工費合計</th><th></th></tr></thead>';
+      html += '<thead><tr><th>工順</th><th>工程</th><th>作業時間(h/個)</th><th>直接レート</th><th>間接レート</th><th>加工費合計</th><th>削除</th></tr></thead>';
     }
 
     html += '<tbody class="routing-tbody">';
@@ -246,7 +246,7 @@
       html += '<td class="num">' + app.formatNum(Math.round(indirectRate)) + '</td>';
       html += '<td class="num">' + app.formatYen(cost) + '</td>';
     }
-    html += '<td><button type="button" class="btn-icon text-danger rt-remove" data-ri="' + ri + '">&#10005;</button></td>';
+    html += '<td style="text-align:center"><button type="button" class="btn-sm text-danger rt-remove" data-ri="' + ri + '" title="この工程を削除">削除</button></td>';
     html += '</tr>';
     return html;
   }

@@ -40,8 +40,8 @@
       html += '<div class="dept-card-header">';
       html += '<h3>' + app.escHtml(d.department_name) + '</h3>';
       html += '<div>';
-      html += '<button class="btn-icon" onclick="CostApp.deptCost.editDept(' + idx + ')" title="編集">&#9998;</button>';
-      html += '<button class="btn-icon text-danger" onclick="CostApp.deptCost.removeDept(' + idx + ')" title="削除">&#10005;</button>';
+      html += '<button class="btn-sm" onclick="CostApp.deptCost.editDept(' + idx + ')" title="この部門を編集">編集</button> ';
+      html += '<button class="btn-sm text-danger" onclick="CostApp.deptCost.removeDept(' + idx + ')" title="この部門を削除">削除</button>';
       html += '</div>';
       html += '</div>';
       html += '<div class="dept-card-body">';
