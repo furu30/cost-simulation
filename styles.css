@@ -858,3 +858,46 @@ input:focus, select:focus, textarea:focus {
   align-items: center;
   gap: 10px;
 }
+
+/* ── 原価構成バーチャート ── */
+.cost-bar-track {
+  display: flex;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+}
+.cost-bar-seg {
+  height: 100%;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+.cost-bar-seg:first-child {
+  border-radius: 5px 0 0 5px;
+}
+.cost-bar-seg:last-child {
+  border-radius: 0 5px 5px 0;
+}
+.cost-bar-over {
+  border-left: 2px solid #fff;
+}
+.cost-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+.cost-bar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.cost-bar-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}

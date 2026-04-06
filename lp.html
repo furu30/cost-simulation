@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>製品原価シミュレーション | 無料の製造業向け原価計算ツール</title>
+  <meta name="description" content="製造業の製品原価をブラウザだけで簡単シミュレーション。4つの原価計算方式に対応し、部門別アワーレートの自動計算、利益分析、Excel/PDF出力まで完結。登録不要・無料。">
+  <meta property="og:title" content="製品原価シミュレーション | 無料の製造業向け原価計算ツール">
+  <meta property="og:description" content="4つの原価計算方式で製品1個あたりの原価を即シミュレーション。部門別アワーレート自動計算、3つの利益ライン分析、Excel/PDF出力対応。登録不要・完全無料。">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="img/ogp.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='12' width='100' height='100' fill='%232563eb'/><text x='50' y='68' text-anchor='middle' font-size='52' font-weight='700' fill='white'>¥</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --bg: #ffffff;
+      --bg-alt: #f8fafc;
+      --border: #e2e8f0;
+    }
+    body {
+      font-family: 'Noto Sans JP', system-ui, sans-serif;
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── ヘッダー ── */
+    .lp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+    .lp-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .lp-logo-icon {
+      width: 32px; height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .lp-header-cta {
+      padding: 8px 24px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .lp-header-cta:hover { background: var(--primary-hover); }
+
+    /* ── ヒーロー ── */
+    .hero {
+      padding: 80px 24px 60px;
+      text-align: center;
+      background: linear-gradient(180deg, var(--primary-light) 0%, var(--bg) 100%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+    .hero h1 .accent { color: var(--primary); }
+    .hero-sub {
+      font-size: clamp(15px, 2.5vw, 18px);
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 32px;
+    }
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 36px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+    }
+    .hero-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .hero-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .hero-screenshot {
+      margin-top: 48px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero-screenshot img {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+
+    /* ── 課題セクション ── */
+    .problem {
+      padding: 80px 24px;
+      background: var(--bg-alt);
+    }
+    .section-title {
+      text-align: center;
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .section-sub {
+      text-align: center;
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 48px;
+    }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .problem-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .problem-card-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    .problem-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .problem-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* ── 特徴セクション ── */
+    .features {
+      padding: 80px 24px;
+    }
+    .feature-list {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+    .feature-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+    .feature-item:nth-child(even) .feature-text { order: 2; }
+    .feature-item:nth-child(even) .feature-visual { order: 1; }
+    .feature-text h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .feature-text p {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .feature-visual {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    .feature-visual img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+    .feature-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .feature-method {
+      padding: 10px 12px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      text-align: left;
+    }
+    .feature-method strong {
+      font-size: 13px;
+      color: var(--primary);
+      display: block;
+    }
+    .feature-method span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    @media (max-width: 768px) {
+      .feature-item { grid-template-columns: 1fr; }
+      .feature-item:nth-child(even) .feature-text { order: 1; }
+      .feature-item:nth-child(even) .feature-visual { order: 2; }
+    }
+
+    /* ── ターゲットセクション ── */
+    .target {
+      padding: 80px 24px;
+      background: var(--bg-alt);
+    }
+    .target-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .target-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+    }
+    .target-card-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .target-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .target-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .target-card ul {
+      list-style: none;
+      margin-top: 12px;
+      text-align: left;
+    }
+    .target-card ul li {
+      font-size: 14px;
+      color: var(--text-muted);
+      padding: 4px 0;
+    }
+    .target-card ul li::before {
+      content: "✓ ";
+      color: #16a34a;
+      font-weight: 700;
+    }
+    @media (max-width: 768px) {
+      .target-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── CTA セクション ── */
+    .cta-section {
+      padding: 80px 24px;
+      text-align: center;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--primary-light) 100%);
+    }
+    .cta-section h2 {
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .cta-section p {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+    .cta-badges {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .cta-badge {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .cta-badge strong { color: var(--text); }
+
+    /* ── フッター ── */
+    .lp-footer {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: var(--bg-alt);
+    }
+    .lp-footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header class="lp-header">
+    <a href="lp.html" class="lp-logo">
+      <span class="lp-logo-icon">¥</span>
+      製品原価シミュレーション
+    </a>
+    <a href="index.html" class="lp-header-cta">無料で使ってみる</a>
+  </header>
+
+  <!-- ヒーロー -->
+  <section class="hero">
+    <div class="container">
+      <span class="hero-badge">登録不要・完全無料</span>
+      <h1>
+        製品1個の原価、<br>
+        <span class="accent">正確に把握</span>できていますか？
+      </h1>
+      <p class="hero-sub">
+        全社の財務データと部門情報を入力するだけで、<br>
+        アワーレートを自動計算し、製品ごとの原価と利益を可視化します。
+      </p>
+      <a href="index.html" class="hero-cta">今すぐシミュレーションする →</a>
+      <p class="hero-note">ブラウザだけで動作。データはサーバーに送信されません。</p>
+      <div class="hero-screenshot">
+        <img src="img/tab-product.jpg" alt="製品原価シミュレーションの画面" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <!-- 課題 -->
+  <section class="problem">
+    <div class="container">
+      <h2 class="section-title">こんなお悩みはありませんか？</h2>
+      <p class="section-sub">多くの製造業が抱える原価管理の課題</p>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="problem-card-icon">📊</div>
+          <h3>原価がどんぶり勘定になっている</h3>
+          <p>製品ごとの正確な原価が分からず、見積もりの根拠が曖昧。赤字製品に気づけない。</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-card-icon">⏱️</div>
+          <h3>アワーレートの計算が面倒</h3>
+          <p>人件費・設備費・間接費をどう時間単価に落とすか、手計算では限界がある。</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-card-icon">💰</div>
+          <h3>高額な原価管理システムは導入できない</h3>
+          <p>ERPや専用ソフトは数百万円。中小製造業には手が出しにくい。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 特徴 -->
+  <section class="features">
+    <div class="container">
+      <h2 class="section-title">3つのステップで原価を見える化</h2>
+      <p class="section-sub">複雑な原価計算を、誰でも使えるシンプルな操作で</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-text">
+            <h3>4つの原価計算方式に対応</h3>
+            <p>
+              簡易方式から部門別アワーレート（機械主体工程対応）まで、
+              自社の製造形態に合わせて計算方式を選択できます。
+              段階的にステップアップしながら精度を高められます。
+            </p>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-methods">
+              <div class="feature-method"><strong>方式1</strong><span>簡易方式（統一レート）</span></div>
+              <div class="feature-method"><strong>方式2</strong><span>全社統一（直間分離）</span></div>
+              <div class="feature-method"><strong>方式3</strong><span>部門別（人手主体）</span></div>
+              <div class="feature-method"><strong>方式4</strong><span>部門別（機械混在）</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-text">
+            <h3>間接費の自動配賦で手間いらず</h3>
+            <p>
+              製造原価報告書とP&Lデータを入力するだけで、
+              製造間接費と販管費を自動で分離・配賦。
+              人数比・面積比・手動配分から選択できます。
+            </p>
+          </div>
+          <div class="feature-visual">
+            <img src="img/tab-base.jpg" alt="全社設定画面" loading="lazy">
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-text">
+            <h3>3つの利益ラインで収益性を分析</h3>
+            <p>
+              限界利益・製造利益・営業利益の3段階で利益を可視化。
+              どの製品が稼いでいて、どの製品が足を引っ張っているかが一目瞭然です。
+              製品間の比較ダッシュボードも搭載。
+            </p>
+          </div>
+          <div class="feature-visual">
+            <img src="img/tab-dept.jpg" alt="部門設定画面" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ターゲット -->
+  <section class="target">
+    <div class="container">
+      <h2 class="section-title">このような方におすすめです</h2>
+      <p class="section-sub"></p>
+      <div class="target-grid">
+        <div class="target-card">
+          <div class="target-card-icon">🏭</div>
+          <h3>製造業の経営者・管理者</h3>
+          <p>自社の原価を正確に把握したい方</p>
+          <ul>
+            <li>製品ごとの利益率を知りたい</li>
+            <li>見積もりの根拠を明確にしたい</li>
+            <li>コスト削減の優先順位をつけたい</li>
+            <li>高額なシステム無しで原価管理したい</li>
+          </ul>
+        </div>
+        <div class="target-card">
+          <div class="target-card-icon">📋</div>
+          <h3>製造業コンサルタント</h3>
+          <p>クライアントの原価分析を効率化したい方</p>
+          <ul>
+            <li>初回ヒアリングで即座に試算したい</li>
+            <li>改善提案の数値的根拠を示したい</li>
+            <li>複数シナリオの比較を手軽に行いたい</li>
+            <li>Excel/PDFで報告資料を作成したい</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <h2>まずはデモデータで体験してみてください</h2>
+      <p>5部門・3製品のサンプルデータですぐに試せます</p>
+      <a href="index.html" class="hero-cta">無料で使ってみる →</a>
+      <div class="cta-badges">
+        <span class="cta-badge"><strong>登録不要</strong></span>
+        <span class="cta-badge"><strong>完全無料</strong></span>
+        <span class="cta-badge"><strong>データはローカル保存</strong></span>
+        <span class="cta-badge"><strong>Excel/PDF出力対応</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- フッター -->
+  <footer class="lp-footer">
+    <p>&copy; 2025 RS Consulting &nbsp;|&nbsp; <a href="index.html">アプリを使う</a></p>
+  </footer>
+
+</body>
+</html>

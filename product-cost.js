@@ -171,6 +171,41 @@
     html += '<div class="profit-box operating"><div class="profit-label">営業利益（総原価ベース）</div><div class="profit-value ' + opClass + '">' + app.formatYen(cost.operatingProfit) + ' 円 (' + cost.operatingProfitRate.toFixed(1) + '%)</div></div>';
     html += '</div>';
 
+    // ── 原価構成バーチャート ──
+    if (cost.totalCost > 0 && cost.sellingPrice > 0) {
+      var barTotal = cost.sellingPrice;
+      var segments = [];
+      if (cost.materialCost > 0) segments.push({ label: '材料費', value: cost.materialCost, color: '#3b82f6' });
+      var processCost = cost.directCostTotal - cost.materialCost - cost.outsourcingCost - (cost.specialExpense || 0) - (cost.freightCost || 0);
+      if (processCost > 0) segments.push({ label: '加工費', value: processCost, color: '#2563eb' });
+      if (cost.outsourcingCost > 0) segments.push({ label: '外注費', value: cost.outsourcingCost, color: '#7c3aed' });
+      if (cost.mfgIndirectProcess > 0) segments.push({ label: '製造間接費', value: cost.mfgIndirectProcess, color: '#f59e0b' });
+      if (cost.sgaIndirectProcess > 0) segments.push({ label: '販管費', value: cost.sgaIndirectProcess, color: '#f97316' });
+      var profitVal = cost.operatingProfit;
+      if (profitVal > 0) segments.push({ label: '利益', value: profitVal, color: '#16a34a' });
+
+      html += '<div class="cost-bar-chart" style="margin-top:12px">';
+      html += '<div class="cost-bar-label" style="font-size:12px;color:#64748b;margin-bottom:4px">原価構成（対 販売価格）</div>';
+      html += '<div class="cost-bar-track">';
+      segments.forEach(function(seg) {
+        var pct = Math.max((seg.value / barTotal) * 100, 0);
+        html += '<div class="cost-bar-seg" style="width:' + pct.toFixed(1) + '%;background:' + seg.color + '" title="' + seg.label + ': ' + app.formatYen(seg.value) + '円 (' + pct.toFixed(1) + '%)"></div>';
+      });
+      if (profitVal < 0) {
+        html += '<div class="cost-bar-seg cost-bar-over" style="width:' + Math.min(Math.abs(profitVal) / barTotal * 100, 15).toFixed(1) + '%;background:#dc2626" title="赤字: ' + app.formatYen(Math.abs(profitVal)) + '円"></div>';
+      }
+      html += '</div>';
+      html += '<div class="cost-bar-legend">';
+      segments.forEach(function(seg) {
+        html += '<span class="cost-bar-legend-item"><span class="cost-bar-dot" style="background:' + seg.color + '"></span>' + seg.label + '</span>';
+      });
+      if (profitVal < 0) {
+        html += '<span class="cost-bar-legend-item"><span class="cost-bar-dot" style="background:#dc2626"></span>赤字</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+    }
+
     html += '</div></div>';
     return html;
   }
