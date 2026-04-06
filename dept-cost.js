@@ -48,9 +48,7 @@
       html += '</div>';
       html += '<div class="dept-card-body">';
       var perPerson = d.labor_cost_per_person || (d.worker_count > 0 ? Math.round(d.annual_labor_cost / d.worker_count) : 0);
-      html += '<span class="label">直接作業者数</span><span class="value">' + (d.worker_count || 0) + '名</span>';
-      html += '<span class="label">1人あたり人件費</span><span class="value">' + app.formatNum(perPerson) + '円</span>';
-      html += '<span class="label">年間人件費</span><span class="value">' + app.formatNum(d.annual_labor_cost || 0) + '円</span>';
+      html += '<span class="label">人件費</span><span class="value">' + (d.worker_count || 0) + '名 × ' + app.formatNum(perPerson) + '円 ＝ <strong>' + app.formatNum(d.annual_labor_cost || 0) + '円</strong></span>';
       if (d.standard_machine_cost) {
         html += '<span class="label">機械装置費用</span><span class="value">' + app.formatNum(d.standard_machine_cost) + '円/年</span>';
       }
