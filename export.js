@@ -170,7 +170,7 @@
         return app.calcEngine.calcProductCost(p, deptRates, cs, level);
       }
     });
-    allCosts.forEach(function(c) { enrichCostResult(c, cs, allCosts); });
+    allCosts.forEach(function(c) { enrichCostResult(c, cs, depts); });
 
     allCosts.forEach(function(c, i) {
       var p = products[i];
@@ -224,7 +224,7 @@
         return app.calcEngine.calcProductCost(p, deptRates, cs, level);
       }
     });
-    allCosts2.forEach(function(c) { enrichCostResult(c, cs, allCosts2); });
+    allCosts2.forEach(function(c) { enrichCostResult(c, cs, depts); });
 
     products.forEach(function(p, pi) {
       var c = allCosts2[pi];
@@ -271,15 +271,34 @@
   }
 
   // enrichCostResult (product-cost.js と同じロジック)
-  function enrichCostResult(cost, cs, allCosts) {
+  function enrichCostResult(cost, cs, departments) {
     cost.mfgIndirectProcess = cost.totalIndirectProcess || 0;
     var sgaTotal = cs.sga_indirect_expenses || 0;
+    var sgaAllocType = cs.sga_alloc_type || "operating_hours";
+    var commonHours = cs.common_working_hours || 0;
     cost.sgaIndirectProcess = 0;
-    if (sgaTotal > 0 && allCosts && allCosts.length > 0) {
-      var totalDirectAll = 0;
-      allCosts.forEach(function(c) { totalDirectAll += c.directCostTotal || 0; });
-      if (totalDirectAll > 0) {
-        cost.sgaIndirectProcess = Math.round(sgaTotal * ((cost.directCostTotal || 0) / totalDirectAll));
+    if (sgaTotal > 0 && departments && departments.length > 0) {
+      var companyTotal = 0;
+      departments.forEach(function(d) {
+        if (sgaAllocType === "direct_cost") {
+          companyTotal += (d.annual_labor_cost || 0) + (d.standard_machine_cost || 0);
+        } else {
+          companyTotal += (d.worker_count || 0) * commonHours;
+        }
+      });
+      if (companyTotal > 0) {
+        var productValue = 0;
+        (cost.routingDetails || []).forEach(function(rd) {
+          if (sgaAllocType === "direct_cost") {
+            productValue += rd.cost || 0;
+          } else {
+            productValue += rd.working_hours || 0;
+          }
+        });
+        if (sgaAllocType === "direct_cost") {
+          productValue += (cost.materialCost || 0) + (cost.outsourcingCost || 0);
+        }
+        cost.sgaIndirectProcess = Math.round(sgaTotal * (productValue / companyTotal));
       }
     }
     cost.manufacturingCost = (cost.directCostTotal || 0) + cost.mfgIndirectProcess;

@@ -15,24 +15,45 @@
   /**
    * 製品原価結果に製造利益・販管費配賦を追加
    * 製造間接費: 部門配賦済み（calc-engineで計算済み、totalIndirectProcessに含まれる）
-   * 販管費: 製品の直接原価比で直接配賦
+   * 販管費: 全社ベースで製品に配賦（稼働時間比 or 直接原価比）
    */
-  function enrichCostResult(cost, cs, allCosts) {
+  function enrichCostResult(cost, cs, departments) {
     // 製造間接費は部門配賦済みなのでそのまま使う
     cost.mfgIndirectProcess = cost.totalIndirectProcess || 0;
 
-    // 販管費を直接原価比で製品に直接配賦
+    // 販管費を全社ベースで製品に配賦
     var sgaTotal = cs.sga_indirect_expenses || 0;
+    var sgaAllocType = cs.sga_alloc_type || "operating_hours";
+    var commonHours = cs.common_working_hours || 0;
     cost.sgaIndirectProcess = 0;
-    if (sgaTotal > 0 && allCosts && allCosts.length > 0) {
-      // 全製品の直接原価合計を算出
-      var totalDirectAll = 0;
-      allCosts.forEach(function(c) {
-        totalDirectAll += c.directCostTotal || 0;
+
+    if (sgaTotal > 0 && departments && departments.length > 0) {
+      // 全社の合計を算出（部門データから）
+      var companyTotal = 0;
+      departments.forEach(function(d) {
+        if (sgaAllocType === "direct_cost") {
+          companyTotal += (d.annual_labor_cost || 0) + (d.standard_machine_cost || 0);
+        } else {
+          // 稼働時間比
+          companyTotal += (d.worker_count || 0) * commonHours;
+        }
       });
-      if (totalDirectAll > 0) {
-        var myDirect = cost.directCostTotal || 0;
-        cost.sgaIndirectProcess = Math.round(sgaTotal * (myDirect / totalDirectAll));
+
+      if (companyTotal > 0) {
+        // この製品の工程時間 or 直接原価の合計
+        var productValue = 0;
+        (cost.routingDetails || []).forEach(function(rd) {
+          if (sgaAllocType === "direct_cost") {
+            productValue += rd.cost || 0; // 加工費
+          } else {
+            productValue += rd.working_hours || 0; // 工程時間
+          }
+        });
+        if (sgaAllocType === "direct_cost") {
+          // 直接原価比の場合は材料費+外注費も含める
+          productValue += (cost.materialCost || 0) + (cost.outsourcingCost || 0);
+        }
+        cost.sgaIndirectProcess = Math.round(sgaTotal * (productValue / companyTotal));
       }
     }
 
@@ -82,7 +103,7 @@
     });
     // 販管費配賦を含むenrich処理
     if (level >= 2) {
-      allCosts.forEach(function(cost) { enrichCostResult(cost, cs, allCosts); });
+      allCosts.forEach(function(cost) { enrichCostResult(cost, cs, departments); });
     }
 
     container.innerHTML = products.map(function(p, idx) {
@@ -403,7 +424,7 @@
           return app.calcEngine.calcProductCost(p, deptRates, cs, level);
         }
       });
-      allCosts.forEach(function(c) { enrichCostResult(c, cs, allCosts); });
+      allCosts.forEach(function(c) { enrichCostResult(c, cs, departments); });
 
       html += '<thead><tr><th>製品</th><th>直接材料費</th><th>直接加工費</th><th>直接外注費</th><th>直接原価計</th><th>製造間接費</th><th>製造原価</th><th>販管費</th><th>総原価</th><th>販売価格</th><th>限界利益率</th><th>製造利益率</th><th>営業利益率</th></tr></thead><tbody>';
       allCosts.forEach(function(c, i) {

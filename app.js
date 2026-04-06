@@ -14,7 +14,8 @@
         freight_rate_per_unit: 0,   // 円/kg
         common_working_hours: 0,    // 年間総労働時間(h)
         common_indirect_expenses: 0, // 全社共通間接費(円)
-        allocation_base_type: "worker_count" // 配賦基準区分（全社統一）
+        allocation_base_type: "operating_hours", // 配賦基準区分（製造間接費）
+        sga_alloc_type: "operating_hours"       // 配賦基準区分（販管費）
       },
       /** P&L参考データ */
       plData: { sales: 0, sga_total: 0, sga_shipping: 0 },
@@ -416,9 +417,13 @@
     var costSplitSection = document.getElementById("cost-split-section");
     if (costSplitSection) costSplitSection.style.display = level >= 2 ? "" : "none";
 
-    // 方式2以上: 販管費配賦の説明表示
+    // 方式2以上: 販管費配賦基準・説明表示
     var sgaInfo = document.getElementById("sga-alloc-info");
     if (sgaInfo) sgaInfo.style.display = level >= 2 ? "" : "none";
+    var sgaLabel = document.getElementById("sga-alloc-label");
+    var sgaSelect = document.getElementById("cs-sga-alloc-type");
+    if (sgaLabel) sgaLabel.style.display = level >= 2 ? "" : "none";
+    if (sgaSelect) sgaSelect.style.display = level >= 2 ? "" : "none";
 
     document.body.dataset.calcLevel = level;
   }

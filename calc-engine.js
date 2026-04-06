@@ -169,9 +169,9 @@
   function getDeptAllocValue(di, allocType) {
     if (allocType === "operating_hours") return di.operatingHours || 0;
     if (allocType === "direct_cost") return di.directCost || 0;
-    if (allocType === "worker_count") return di.dept.worker_count || 0;
-    if (allocType === "area" || allocType === "manual") return di.dept.allocation_base_value || 0;
-    return di.dept.worker_count || 0;
+    if (allocType === "manual") return di.dept.allocation_base_value || 0;
+    // フォールバック（廃止された人数比・面積比含む）
+    return di.operatingHours || 0;
   }
 
   // ════════════════════════════════════════════════════

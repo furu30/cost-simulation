@@ -62,7 +62,11 @@
     // 全社設定
     document.getElementById(csIdMap.setting_name).value = cs.setting_name || "";
     document.getElementById(csIdMap.common_working_hours).value = cs.common_working_hours || 0;
-    document.getElementById(csIdMap.allocation_base_type).value = cs.mfg_alloc_type || cs.allocation_base_type || "operating_hours";
+    var mfgAlloc = cs.mfg_alloc_type || cs.allocation_base_type || "operating_hours";
+    // 廃止された配賦基準をフォールバック
+    if (mfgAlloc === "worker_count" || mfgAlloc === "area") mfgAlloc = "operating_hours";
+    document.getElementById(csIdMap.allocation_base_type).value = mfgAlloc;
+    document.getElementById("cs-sga-alloc-type").value = cs.sga_alloc_type || "operating_hours";
 
     // P&L
     plFields.forEach(function(f) {
@@ -119,6 +123,7 @@
     var allocVal = document.getElementById(csIdMap.allocation_base_type).value;
     data.companySettings.allocation_base_type = allocVal;
     data.companySettings.mfg_alloc_type = allocVal;
+    data.companySettings.sga_alloc_type = document.getElementById("cs-sga-alloc-type").value;
 
     // バリデーション
     if (hours > 0 && (hours < 100 || hours > 4000)) {

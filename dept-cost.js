@@ -52,10 +52,8 @@
       if (d.standard_machine_cost) {
         html += '<div class="dept-labor-row"><span class="label">機械装置費用</span><span class="value">' + app.formatNum(d.standard_machine_cost) + '円/年</span></div>';
       }
-      if (allocType === "area") {
-        html += '<span class="label">面積(㎡)</span><span class="value">' + (d.allocation_base_value || 0) + '</span>';
-      } else if (allocType === "manual") {
-        html += '<span class="label">配賦比率(%)</span><span class="value">' + (d.allocation_base_value || 0) + '</span>';
+      if (allocType === "manual") {
+        html += '<div class="dept-labor-row"><span class="label">配賦比率</span><span class="value">' + (d.allocation_base_value || 0) + '%</span></div>';
       }
 
       if (level >= 4 && isMachine) {
@@ -208,15 +206,10 @@
 
   function toggleAllocValueField() {
     var data = app.loadData();
-    var allocType = data.companySettings.allocation_base_type || "worker_count";
+    var allocType = data.companySettings.mfg_alloc_type || data.companySettings.allocation_base_type || "operating_hours";
     var section = document.getElementById("alloc-value-section");
-    var label = document.getElementById("alloc-value-label");
-    if (allocType === "area") {
+    if (allocType === "manual") {
       section.style.display = "block";
-      label.textContent = "面積(㎡)";
-    } else if (allocType === "manual") {
-      section.style.display = "block";
-      label.textContent = "配賦比率(%)";
     } else {
       section.style.display = "none";
     }
