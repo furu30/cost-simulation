@@ -100,7 +100,7 @@
       tbody.innerHTML = rows;
     } else if (level === 2) {
       // 方式2: 全社統一（直接/間接分離）
-      thead.innerHTML = '<tr><th>部門</th><th>直接原価(円)</th><th>間接費(円)</th><th>総費用(円)</th><th>稼働時間(h)</th><th>直接レート(円/h)</th><th>間接レート(円/h)</th><th>総レート(円/h)</th></tr>';
+      thead.innerHTML = '<tr><th>部門</th><th>直接原価(円)</th><th>製造間接費(円)</th><th>総費用(円)</th><th>稼働時間(h)</th><th>直接レート(円/h)</th><th>製造間接レート(円/h)</th><th>総レート(円/h)</th></tr>';
       var lv1 = app.calcEngine.calcLv1Rate(cs, depts, level);
       var deptResults = app.calcEngine.calcDeptRatesLv3(cs, depts, false);
       var rows = deptResults.map(function(r) {
@@ -128,7 +128,7 @@
       tbody.innerHTML = rows;
     } else {
       // 方式3/4: 部門別レート（直接/間接分離）
-      thead.innerHTML = '<tr><th>部門</th><th>直接原価(円)</th><th>間接費(円)</th><th>総費用(円)</th><th>稼働時間(h)</th><th>直接レート(円/h)</th><th>間接レート(円/h)</th><th>総レート(円/h)</th></tr>';
+      thead.innerHTML = '<tr><th>部門</th><th>直接原価(円)</th><th>製造間接費(円)</th><th>総費用(円)</th><th>稼働時間(h)</th><th>直接レート(円/h)</th><th>製造間接レート(円/h)</th><th>総レート(円/h)</th></tr>';
       var allowMachine = (level === 4);
       var results = app.calcEngine.calcDeptRatesLv3(cs, depts, allowMachine);
       tbody.innerHTML = results.map(function(r) {
@@ -144,6 +144,21 @@
           '<td class="num" style="font-weight:600">' + app.formatNum(Math.round(r.hourlyRate)) + '</td>' +
         '</tr>';
       }).join("");
+    }
+
+    // 方式2以上: 販管費の注記
+    var noteEl = document.getElementById("dept-rate-note");
+    if (!noteEl) {
+      noteEl = document.createElement("p");
+      noteEl.id = "dept-rate-note";
+      noteEl.style.cssText = "font-size:12px;color:var(--text-muted);margin-top:8px";
+      document.getElementById("dept-rate-summary").appendChild(noteEl);
+    }
+    if (level >= 2) {
+      noteEl.textContent = "※ 上記レートには製造間接費のみ含まれます。販管費は製品に直接配賦されるため、アワーレートには含まれません。";
+      noteEl.style.display = "";
+    } else {
+      noteEl.style.display = "none";
     }
 
     document.getElementById("dept-rate-summary").style.display = "block";

@@ -53,7 +53,16 @@
           // 直接原価比の場合は材料費+外注費も含める
           productValue += (cost.materialCost || 0) + (cost.outsourcingCost || 0);
         }
-        cost.sgaIndirectProcess = Math.round(sgaTotal * (productValue / companyTotal));
+        var sgaRatio = productValue / companyTotal;
+        cost.sgaIndirectProcess = Math.round(sgaTotal * sgaRatio);
+        // 計算過程を保存（表示用）
+        cost.sgaCalcInfo = {
+          allocType: sgaAllocType,
+          sgaTotalYen: sgaTotal,
+          productValue: productValue,
+          companyTotal: companyTotal,
+          ratio: sgaRatio
+        };
       }
     }
 
@@ -149,7 +158,7 @@
     if (level === 1) {
       html += '<thead><tr><th>工順</th><th>工程</th><th>作業時間(h/個)</th><th>レート(円/h)</th><th>加工費</th><th>削除</th></tr></thead>';
     } else {
-      html += '<thead><tr><th>工順</th><th>工程</th><th>作業時間(h/個)</th><th>直接レート</th><th>間接レート</th><th>加工費合計</th><th>削除</th></tr></thead>';
+      html += '<thead><tr><th>工順</th><th>工程</th><th>作業時間(h/個)</th><th>直接レート</th><th>製造間接レート</th><th>加工費合計</th><th>削除</th></tr></thead>';
     }
 
     html += '<tbody class="routing-tbody">';
@@ -188,9 +197,21 @@
     } else {
       // ── 方式2以上: 直接原価 → 製造原価 → 総原価 ──
       html += '<div class="cost-line cost-subtotal direct"><span>▶ 直接原価</span><span>' + app.formatYen(cost.directCostTotal) + ' 円</span></div>';
-      html += '<div class="cost-line cost-indent"><span>＋ 製造間接費</span><span>' + app.formatYen(cost.mfgIndirectProcess) + ' 円</span></div>';
+      html += '<div class="cost-line cost-indent"><span>＋ 製造間接費（部門配賦）</span><span>' + app.formatYen(cost.mfgIndirectProcess) + ' 円</span></div>';
       html += '<div class="cost-line cost-subtotal manufacturing"><span>▶ 製造原価</span><span>' + app.formatYen(cost.manufacturingCost) + ' 円</span></div>';
-      html += '<div class="cost-line cost-indent"><span>＋ 販管費</span><span>' + app.formatYen(cost.sgaIndirectProcess) + ' 円</span></div>';
+      html += '<div class="cost-line cost-indent"><span>＋ 販管費（製品配賦）</span><span>' + app.formatYen(cost.sgaIndirectProcess) + ' 円</span></div>';
+      // 販管費の配賦計算式を表示
+      if (cost.sgaCalcInfo) {
+        var info = cost.sgaCalcInfo;
+        var basisLabel = info.allocType === "direct_cost" ? "直接原価" : "稼働時間";
+        var unitLabel = info.allocType === "direct_cost" ? "円" : "h";
+        html += '<div class="cost-indent" style="font-size:11px;color:var(--text-muted);padding-left:16px;margin-top:2px">';
+        html += '販管費 ' + app.formatNum(Math.round(info.sgaTotalYen / 1000)) + '千円 × ' + basisLabel + '比（';
+        html += app.formatNum(Math.round(info.productValue * 100) / 100) + unitLabel + ' ÷ 全社 ' + app.formatNum(Math.round(info.companyTotal)) + unitLabel;
+        var pctStr = info.ratio < 0.01 ? (info.ratio * 100).toFixed(4) : (info.ratio * 100).toFixed(2);
+        html += ' = ' + pctStr + '%）';
+        html += '</div>';
+      }
       html += '<div class="cost-line cost-total"><span>▶ 総原価</span><span>' + app.formatYen(cost.totalCost) + ' 円</span></div>';
 
       // ── 3利益ライン ──
