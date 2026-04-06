@@ -303,7 +303,7 @@ input:focus, select:focus, textarea:focus {
 .dept-labor-row {
   grid-column: 1 / -1;
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: baseline;
 }
 

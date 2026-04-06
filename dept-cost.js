@@ -50,7 +50,7 @@
       var perPerson = d.labor_cost_per_person || (d.worker_count > 0 ? Math.round(d.annual_labor_cost / d.worker_count) : 0);
       html += '<div class="dept-labor-row"><span class="label">人件費</span><span class="value">' + (d.worker_count || 0) + '名 × ' + app.formatNum(perPerson) + '円 ＝ <strong>' + app.formatNum(d.annual_labor_cost || 0) + '円</strong></span></div>';
       if (d.standard_machine_cost) {
-        html += '<span class="label">機械装置費用</span><span class="value">' + app.formatNum(d.standard_machine_cost) + '円/年</span>';
+        html += '<div class="dept-labor-row"><span class="label">機械装置費用</span><span class="value">' + app.formatNum(d.standard_machine_cost) + '円/年</span></div>';
       }
       if (allocType === "area") {
         html += '<span class="label">面積(㎡)</span><span class="value">' + (d.allocation_base_value || 0) + '</span>';
