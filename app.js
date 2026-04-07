@@ -604,11 +604,16 @@
     }
 
     document.getElementById("btn-cover-start").addEventListener("click", function() {
-      cover.classList.add("hide");
+      // ボタンにパルス効果
+      this.style.transform = "scale(1.1)";
+      this.style.boxShadow = "0 0 40px rgba(37,99,235,0.6)";
       setTimeout(function() {
-        cover.style.display = "none";
-        initOnboarding();
-      }, 400);
+        cover.classList.add("hide");
+        setTimeout(function() {
+          cover.style.display = "none";
+          initOnboarding();
+        }, 600);
+      }, 200);
     });
   }
 
