@@ -43,6 +43,16 @@
       document.getElementById(mcrIdMap[f]).addEventListener("input", updateSummary);
     });
 
+    // 配賦基準の変更時に即時保存・再計算
+    document.getElementById("cs-alloc-type").addEventListener("change", function() {
+      save();
+      updateSummary();
+    });
+    document.getElementById("cs-sga-alloc-type").addEventListener("change", function() {
+      save();
+      updateSummary();
+    });
+
     // 直間区分
     document.getElementById("cost-split-mode").addEventListener("change", function() {
       toggleCostSplitMode();
