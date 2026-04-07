@@ -167,9 +167,12 @@
           <label>販管費（千円）</label>
           <input type="number" id="pl-sga-total" class="input-num" step="1">
         </div>
-        <div id="pl-shipping-row" class="form-grid" style="display:none">
-          <label>うち運送費（千円）</label>
-          <input type="number" id="pl-sga-shipping" class="input-num" step="1">
+        <div id="pl-shipping-row" style="display:none">
+          <div class="form-grid">
+            <label>うち運送費（千円）</label>
+            <input type="number" id="pl-sga-shipping" class="input-num" step="1">
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">※ 販管費に含まれる出荷・配送の運送費を入力してください。材料の仕入運賃など製造原価に含まれる運送費は、製造原価報告書の経費「その他」に含めてください。</div>
         </div>
         <div class="summary-row" id="pl-summary"></div>
       </section>
