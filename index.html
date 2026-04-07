@@ -18,19 +18,19 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='12' width='100' height='100' fill='%232563eb'/><text x='50' y='68' text-anchor='middle' font-size='52' font-weight='700' fill='white'>¥</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1.1">
+  <link rel="stylesheet" href="styles.css?v=1.2">
 </head>
 <body>
   <!-- ヘッダー -->
   <header class="app-header">
     <h1>製品原価シミュレーション</h1>
     <div class="header-actions">
-      <button id="btn-reset-data" class="btn btn-outline" title="データを初期化" style="color:#d32f2f;border-color:#d32f2f">リセット</button>
-      <button id="btn-demo-data" class="btn btn-outline" title="デモデータ投入">デモデータ</button>
+      <button id="btn-reset-data" class="btn btn-outline" title="全データを削除して初期化" style="color:#d32f2f;border-color:#d32f2f">リセット</button>
+      <button id="btn-demo-data" class="btn btn-outline" title="デモデータ投入">デモ</button>
       <button id="btn-export-excel" class="btn btn-outline" title="Excel出力" style="background:#217346;color:#fff;border-color:#217346">📊 Excel</button>
       <button id="btn-export-pdf" class="btn btn-outline" title="PDF出力" style="background:#d32f2f;color:#fff;border-color:#d32f2f">📄 PDF</button>
-      <button id="btn-export" class="btn btn-outline" title="JSON書き出し">書き出し</button>
-      <button id="btn-import" class="btn btn-outline" title="JSON読み込み">読み込み</button>
+      <button id="btn-export" class="btn btn-outline" title="JSONファイルにバックアップ保存">💾 保存</button>
+      <button id="btn-import" class="btn btn-outline" title="JSONファイルからデータ復元">📂 復元</button>
       <input type="file" id="file-import" accept=".json" style="display:none">
       <button id="btn-guide" class="btn btn-outline" title="使い方ガイド" style="background:#2563eb;color:#fff;border-color:#2563eb">❓ 使い方</button>
     </div>
@@ -215,9 +215,7 @@
       </section>
     </div>
 
-    <div class="panel-actions">
-      <button id="btn-save-base" class="btn btn-primary">保存</button>
-    </div>
+    <div id="btn-save-base" style="display:none"></div>
   </div>
 
   <!-- ======== 画面2: 部門（工程）マスタ (departments) ======== -->

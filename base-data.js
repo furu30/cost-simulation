@@ -28,38 +28,38 @@
     exp_taxes: "mcr-taxes", exp_rent: "mcr-rent", exp_other: "mcr-other"
   };
 
-  function init() {
-    document.getElementById("btn-save-base").addEventListener("click", save);
+  var _saveTimer = null;
+  function autoSave() {
+    clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(function() { save(true); }, 800);
+  }
 
-    // リアルタイムサマリー更新
+  function init() {
+    // 全フィールドにリアルタイムサマリー更新 + デバウンス自動保存
     csFields.forEach(function(f) {
-      document.getElementById(csIdMap[f]).addEventListener("input", updateSummary);
+      var el = document.getElementById(csIdMap[f]);
+      el.addEventListener("input", function() { updateSummary(); autoSave(); });
     });
     plFields.forEach(function(f) {
       var el = document.getElementById(plIdMap[f]);
-      if (el) el.addEventListener("input", updateSummary);
+      if (el) el.addEventListener("input", function() { updateSummary(); autoSave(); });
     });
     mcrFields.forEach(function(f) {
-      document.getElementById(mcrIdMap[f]).addEventListener("input", updateSummary);
+      document.getElementById(mcrIdMap[f]).addEventListener("input", function() { updateSummary(); autoSave(); });
     });
 
-    // 配賦基準の変更時に即時保存・再計算
-    document.getElementById("cs-alloc-type").addEventListener("change", function() {
-      save();
-      updateSummary();
-    });
-    document.getElementById("cs-sga-alloc-type").addEventListener("change", function() {
-      save();
-      updateSummary();
-    });
+    // selectの変更は即時保存
+    document.getElementById("cs-alloc-type").addEventListener("change", function() { save(); updateSummary(); });
+    document.getElementById("cs-sga-alloc-type").addEventListener("change", function() { save(); updateSummary(); });
 
     // 直間区分
     document.getElementById("cost-split-mode").addEventListener("change", function() {
       toggleCostSplitMode();
+      save();
       updateSummary();
     });
     ["split-material-ratio", "split-outsourcing-ratio", "split-depreciation-ratio", "split-shipping-ratio", "split-material-indirect", "split-outsourcing-indirect", "split-depreciation-indirect", "split-shipping-indirect"].forEach(function(id) {
-      document.getElementById(id).addEventListener("input", updateSummary);
+      document.getElementById(id).addEventListener("input", function() { updateSummary(); autoSave(); });
     });
 
     load();
@@ -124,7 +124,7 @@
     document.getElementById("split-shipping-indirect").style.display = show;
   }
 
-  function save() {
+  function save(silent) {
     var data = app.loadData();
 
     // 全社設定
@@ -168,7 +168,7 @@
     // 間接費を再計算してから保存
     data.companySettings.common_indirect_expenses = app.calcAutoIndirect(data);
     app.saveData(data);
-    app.showToast("全社設定を保存しました", "success");
+    if (!silent) app.showToast("全社設定を保存しました", "success");
   }
 
   function updateSummary() {

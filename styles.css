@@ -38,6 +38,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 12px 24px;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border);
@@ -46,10 +48,15 @@ body {
 .app-header h1 {
   font-size: 18px;
   font-weight: 700;
+  white-space: nowrap;
 }
 .header-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.header-actions .btn {
+  white-space: nowrap;
 }
 
 /* ── タブバー ── */
