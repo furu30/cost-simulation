@@ -179,6 +179,9 @@
           <input type="number" id="mcr-material" class="input-num" step="1">
         </div>
         <h3>労務費</h3>
+        <div style="margin:4px 0 8px;font-size:11px;color:var(--text-muted)">
+          ※ 決算書の金額をそのまま入力してください。部門の直接人件費との差額が自動的に間接労務費として計算されます。
+        </div>
         <div class="form-grid">
           <label>賃金（千円）</label>
           <input type="number" id="mcr-wages" class="input-num" step="1">
@@ -192,7 +195,11 @@
           <label>外注加工費（千円）</label>
           <input type="number" id="mcr-outsourcing" class="input-num" step="1">
         </div>
-        <h3>経費 <span class="text-muted" style="font-size:11px;font-weight:400">※減価償却費は部門の機械装置費用に含まれない分を入力</span></h3>
+        <h3>経費</h3>
+        <div class="guide-callout guide-callout-warning" style="margin:4px 0 8px;padding:8px 12px;font-size:12px">
+          <strong>⚠️ 減価償却費の二重計上に注意</strong><br>
+          部門（工程）の「標準機械装置費用」に含めた設備の償却費は、ここには入力しないでください。決算書の減価償却費から、部門に直接計上済みの分を差し引いた残り（建物・共用設備等）だけを入力します。
+        </div>
         <div class="form-grid">
           <label>減価償却費（千円）</label>
           <input type="number" id="mcr-depreciation" class="input-num" step="1">
