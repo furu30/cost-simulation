@@ -607,8 +607,220 @@
       var btnDemo = document.getElementById("btn-demo-data");
       if (btnDemo) btnDemo.click();
     });
+    document.getElementById("btn-onboarding-guide").addEventListener("click", function() {
+      modal.style.display = "none";
+      if (window.CostApp.startStepGuide) window.CostApp.startStepGuide();
+    });
     document.getElementById("btn-onboarding-skip").addEventListener("click", function() {
       modal.style.display = "none";
+    });
+  }
+
+  // ══ ステップバイステップ入力ガイド ══
+  function initStepGuide() {
+    var modal = document.getElementById("step-guide-modal");
+    var titleEl = document.getElementById("step-guide-title");
+    var progressEl = document.getElementById("step-guide-progress");
+    var contentEl = document.getElementById("step-guide-content");
+    var prevBtn = document.getElementById("btn-step-prev");
+    var nextBtn = document.getElementById("btn-step-next");
+    if (!modal) return;
+
+    var steps = [
+      {
+        title: "決算書を手元に準備してください",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">このガイドでは、以下の決算書の数値を順番に入力していきます。</p>' +
+          '<div style="background:var(--bg);border-radius:6px;padding:12px 16px;font-size:13px;line-height:2">' +
+          '<strong>必要な書類：</strong><br>' +
+          '1. <strong>損益計算書（P&L）</strong> — 売上高、販管費<br>' +
+          '2. <strong>製造原価報告書</strong> — 材料費、労務費、外注費、経費の内訳<br>' +
+          '3. <strong>部門別の情報</strong> — 各工程の作業者数、人件費、設備費用</div>' +
+          '<p style="font-size:13px;color:var(--text-muted);margin-top:8px">すべて千円単位で入力します。100万円 → 1000 と入力します。</p>'
+      },
+      {
+        title: "売上高と販管費を入力",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">損益計算書（P&L）から、<strong>売上高</strong>と<strong>販管費</strong>を入力してください。</p>' +
+          '<div class="form-grid" style="max-width:400px">' +
+          '<label>売上高（千円）</label><input type="number" id="sg-pl-sales" class="input-num" step="1">' +
+          '<label>販管費（千円）</label><input type="number" id="sg-pl-sga" class="input-num" step="1">' +
+          '</div>' +
+          '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
+          '売上高14億2,500万円 → <strong>1425000</strong>　販管費8,841万円 → <strong>88410</strong></div>'
+      },
+      {
+        title: "製造原価報告書の主要項目を入力",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">製造原価報告書から主要な費目を入力してください。</p>' +
+          '<div class="form-grid" style="max-width:400px">' +
+          '<label>材料費（千円）</label><input type="number" id="sg-mcr-mat" class="input-num" step="1">' +
+          '<label>労務費合計（千円）</label><input type="number" id="sg-mcr-labor" class="input-num" step="1">' +
+          '<label>外注加工費（千円）</label><input type="number" id="sg-mcr-out" class="input-num" step="1">' +
+          '<label>経費合計（千円）</label><input type="number" id="sg-mcr-exp" class="input-num" step="1">' +
+          '</div>' +
+          '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
+          '労務費合計 = 賃金＋賞与＋福利厚生費<br>経費合計 = 減価償却費＋消耗品費＋修繕費＋リース料＋電力費＋その他</div>'
+      },
+      {
+        title: "年間労働時間を入力",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">1人あたりの年間稼働時間を入力してください。</p>' +
+          '<div class="form-grid" style="max-width:400px">' +
+          '<label>年間労働時間(h)</label><input type="number" id="sg-hours" class="input-num" step="1" value="1800">' +
+          '</div>' +
+          '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
+          '一般的な目安：<br>年間250日 × 7.2時間 = <strong>1,800時間</strong><br>年間240日 × 8時間 = <strong>1,920時間</strong></div>'
+      },
+      {
+        title: "入力完了！",
+        html: '<div style="text-align:center;padding:20px 0">' +
+          '<div style="font-size:40px;margin-bottom:12px">🎉</div>' +
+          '<p style="font-size:16px;font-weight:600;margin-bottom:8px">基本データの入力が完了しました</p>' +
+          '<p style="font-size:14px;color:var(--text-muted);line-height:1.8">全社設定タブにデータが反映されています。<br>次は「部門（工程）」タブで各工程の情報を登録してください。</p>' +
+          '</div>'
+      }
+    ];
+
+    var currentStep = 0;
+
+    function showStep(idx) {
+      currentStep = idx;
+      titleEl.textContent = steps[idx].title;
+      progressEl.textContent = (idx + 1) + " / " + steps.length;
+      contentEl.innerHTML = steps[idx].html;
+      prevBtn.style.display = idx === 0 ? "none" : "";
+      nextBtn.textContent = idx === steps.length - 1 ? "完了" : "次へ";
+    }
+
+    prevBtn.addEventListener("click", function() {
+      if (currentStep > 0) showStep(currentStep - 1);
+    });
+
+    nextBtn.addEventListener("click", function() {
+      // ステップのデータを保存
+      if (currentStep === 1) {
+        var data = loadData();
+        data.plData.sales = parseFloat(document.getElementById("sg-pl-sales").value) || 0;
+        data.plData.sga_total = parseFloat(document.getElementById("sg-pl-sga").value) || 0;
+        saveData(data);
+      } else if (currentStep === 2) {
+        var data = loadData();
+        data.mcrData.material_cost = parseFloat(document.getElementById("sg-mcr-mat").value) || 0;
+        var labor = parseFloat(document.getElementById("sg-mcr-labor").value) || 0;
+        data.mcrData.labor_wages = labor;
+        data.mcrData.labor_bonus = 0;
+        data.mcrData.labor_welfare = 0;
+        data.mcrData.outsourcing_cost = parseFloat(document.getElementById("sg-mcr-out").value) || 0;
+        var exp = parseFloat(document.getElementById("sg-mcr-exp").value) || 0;
+        data.mcrData.exp_depreciation = exp;
+        data.mcrData.exp_consumables = 0;
+        data.mcrData.exp_repairs = 0;
+        data.mcrData.exp_lease = 0;
+        data.mcrData.exp_utilities = 0;
+        data.mcrData.exp_taxes = 0;
+        data.mcrData.exp_rent = 0;
+        data.mcrData.exp_other = 0;
+        saveData(data);
+      } else if (currentStep === 3) {
+        var data = loadData();
+        data.companySettings.common_working_hours = parseInt(document.getElementById("sg-hours").value) || 1800;
+        saveData(data);
+      }
+
+      if (currentStep < steps.length - 1) {
+        showStep(currentStep + 1);
+      } else {
+        modal.style.display = "none";
+        reloadAll();
+        showToast("基本データを登録しました。次は部門（工程）を登録してください。", "success");
+      }
+    });
+
+    // 公開（オンボーディングから呼び出す）
+    window.CostApp.startStepGuide = function() {
+      showStep(0);
+      modal.style.display = "";
+    };
+  }
+
+  // ══ ヘルプアイコン ══
+  var helpData = {
+    "cs-common-working-hours": {
+      title: "共通年間労働時間",
+      text: "1人あたりの年間稼働時間です。有給休暇や休日を除いた実働時間を入力します。",
+      example: "年間250日勤務 × 7.2時間/日 = 1,800時間"
+    },
+    "cs-alloc-type": {
+      title: "製造間接費 配賦基準",
+      text: "製造間接費を各部門に配分する基準です。稼働時間比が最も一般的です。",
+      example: "稼働時間比：稼働時間が長い部門ほど多くの間接費を負担<br>直接原価比：直接原価が大きい部門ほど多く負担"
+    },
+    "pl-sales": {
+      title: "売上高",
+      text: "損益計算書の売上高をそのまま千円単位で入力します。",
+      example: "決算書の売上高が14億2,500万円 → 1425000"
+    },
+    "pl-sga-total": {
+      title: "販管費",
+      text: "販売費及び一般管理費の合計を千円単位で入力します。営業人件費・事務所費・広告費等が含まれます。",
+      example: "決算書の販管費合計が8,841万円 → 88410"
+    },
+    "mcr-material": {
+      title: "材料費",
+      text: "製造原価報告書の材料費をそのまま入力します。主要材料・補助材料・買入部品等の合計です。",
+      example: "決算書の材料費が6億1,317万円 → 613170"
+    },
+    "mcr-outsourcing": {
+      title: "外注加工費",
+      text: "製造原価報告書の外注加工費をそのまま入力します。自社で行わず外部に委託した加工費用です。",
+      example: "メッキ処理や熱処理の外注費"
+    },
+    "mcr-depreciation": {
+      title: "減価償却費",
+      text: "部門の「標準機械装置費用」に含めていない建物・共用設備等の減価償却費のみを入力します。部門に直接計上した設備の分を含めると二重計上になります。",
+      example: "決算書の償却費5,000万円 − 部門計上分3,500万円 = 1,500万円 → 15000"
+    },
+    "split-material-ratio": {
+      title: "材料費 直接費率",
+      text: "製造原価報告書の材料費のうち、製品に直接使用される主要材料の割合です。間接材料（消耗品的な材料）がある場合は100%未満にします。",
+      example: "材料費のほぼ全額が主要材料 → 100%<br>間接材料が1割程度 → 90%"
+    }
+  };
+
+  function initHelpIcons() {
+    var popup = null;
+    for (var id in helpData) {
+      var el = document.getElementById(id);
+      if (!el) continue;
+      var label = el.previousElementSibling;
+      if (!label || label.tagName !== "LABEL") {
+        // selectの場合、前のlabelを探す
+        var prev = el;
+        while (prev && prev.tagName !== "LABEL") prev = prev.previousElementSibling;
+        label = prev;
+      }
+      if (!label) continue;
+      var icon = document.createElement("span");
+      icon.className = "help-icon";
+      icon.textContent = "?";
+      icon.dataset.helpId = id;
+      label.appendChild(icon);
+    }
+
+    document.addEventListener("click", function(e) {
+      var icon = e.target.closest(".help-icon");
+      if (popup) { popup.remove(); popup = null; }
+      if (!icon) return;
+
+      var data = helpData[icon.dataset.helpId];
+      if (!data) return;
+
+      popup = document.createElement("div");
+      popup.className = "help-popup";
+      popup.innerHTML = '<strong>' + data.title + '</strong>' + data.text +
+        (data.example ? '<div class="help-example">' + data.example + '</div>' : '');
+
+      document.body.appendChild(popup);
+      var rect = icon.getBoundingClientRect();
+      popup.style.top = Math.min(rect.bottom + 6, window.innerHeight - popup.offsetHeight - 10) + "px";
+      popup.style.left = Math.min(rect.left, window.innerWidth - popup.offsetWidth - 10) + "px";
     });
   }
 
@@ -620,6 +832,8 @@
     initFreightToggle();
     initEscapeKey();
     initLevelWizard();
+    initHelpIcons();
+    initStepGuide();
 
     if (window.CostApp.baseData) window.CostApp.baseData.init();
     if (window.CostApp.deptCost) window.CostApp.deptCost.init();
