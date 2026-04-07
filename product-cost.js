@@ -190,7 +190,9 @@
     html += '<label>目標販売価格(円)</label><input type="number" class="pf-price input-num" value="' + (p.target_sales_price || 0) + '">';
     html += '<label>直接材料費(円/個) *</label><input type="number" class="pf-material input-num" value="' + (p.direct_material_cost || 0) + '">';
     html += '<label>直接外注費(円/個)</label><input type="number" class="pf-outsource input-num" value="' + (p.direct_outsourcing_cost || 0) + '">';
-    html += '<label>直接運送費(円)</label><input type="number" class="pf-special input-num" value="' + (p.special_direct_expense || 0) + '">';
+    if (cs.enable_freight_cost) {
+      html += '<label>直接運送費(円/個)</label><input type="number" class="pf-special input-num" value="' + (p.special_direct_expense || 0) + '">';
+    }
     html += '</div>';
 
     // ルーティングテーブル
@@ -412,7 +414,7 @@
       target_sales_price: parseFloat(card.querySelector(".pf-price").value) || 0,
       direct_material_cost: parseFloat(card.querySelector(".pf-material").value) || 0,
       direct_outsourcing_cost: parseFloat(card.querySelector(".pf-outsource").value) || 0,
-      special_direct_expense: parseFloat(card.querySelector(".pf-special").value) || 0
+      special_direct_expense: card.querySelector(".pf-special") ? parseFloat(card.querySelector(".pf-special").value) || 0 : 0
     };
     return result;
   }
