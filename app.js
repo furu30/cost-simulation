@@ -678,73 +678,100 @@
       }
     ];
 
-    // 部門ガイドのステップ
-    var deptSteps = [
-      {
-        title: "部門（工程）を登録しましょう",
-        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">製品が通る各工程を「部門」として登録します。工程ごとのコストを把握するために必要です。</p>' +
-          '<div style="background:var(--bg);border-radius:6px;padding:12px 16px;font-size:13px;line-height:2">' +
-          '<strong>準備するもの：</strong><br>' +
-          '・各工程の<strong>直接作業者数</strong><br>' +
-          '・作業者<strong>1人あたりの年間人件費</strong>（賃金+賞与+福利厚生）<br>' +
-          '・各工程で使う<strong>設備の年間費用</strong>（リース料・減価償却費）</div>'
-      },
-      {
-        title: "1つ目の工程を入力",
-        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">まず最初の工程を入力してください。</p>' +
-          '<div class="form-grid" style="max-width:400px">' +
-          '<label>工程名</label><input type="text" id="sg-dept-name" placeholder="例: シート加工">' +
-          '<label>直接作業者数</label><input type="number" id="sg-dept-workers" class="input-num" step="1" value="0">' +
-          '<label>1人あたり年間人件費(円)</label><input type="number" id="sg-dept-labor" class="input-num" step="1" value="3500000">' +
-          '<label>標準機械装置費用(年/円)</label><input type="number" id="sg-dept-machine" class="input-num" step="1" value="0">' +
-          '</div>' +
-          '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
-          '人件費の目安：正社員1人あたり300〜450万円/年（賃金+賞与+福利厚生）<br>' +
-          '機械装置費用：その工程で使う設備のリース料や減価償却費の年間合計</div>'
-      },
-      {
-        title: "登録完了！",
-        html: '<div style="text-align:center;padding:20px 0">' +
-          '<div style="font-size:40px;margin-bottom:12px">🏭</div>' +
-          '<p style="font-size:16px;font-weight:600;margin-bottom:8px">工程を登録しました</p>' +
-          '<p style="font-size:14px;color:var(--text-muted);line-height:1.8">続けて他の工程も「+ 部門追加」ボタンから登録してください。<br>全工程の登録が終わったら「製品原価」タブへ進みます。</p>' +
-          '</div>'
-      }
-    ];
+    // 部門ガイドのステップ（方式別に動的生成）
+    function buildDeptSteps() {
+      var data = loadData();
+      var level = data.companySettings.calc_level || 1;
+      var isLv4 = level >= 4;
+      var machineFields = isLv4
+        ? '<label>稼働形態</label><select id="sg-dept-machine-based" style="font-size:14px;padding:6px 10px"><option value="false">人手主体</option><option value="true">機械主体（稼働時間≠就業時間）</option></select>' +
+          '<label>設備台数</label><input type="number" id="sg-dept-machine-count" class="input-num" step="1" value="0">' +
+          '<label>1台あたり稼働時間(h/年)</label><input type="number" id="sg-dept-machine-hours" class="input-num" step="1" value="0">'
+        : '';
+      var machineHelp = isLv4
+        ? '<br>機械主体：多台持ちや夜間無人運転など、機械稼働時間≠就業時間の場合に選択'
+        : '';
+      return [
+        {
+          title: "部門（工程）を登録しましょう",
+          html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">製品が通る各工程を「部門」として登録します。工程ごとのコストを把握するために必要です。</p>' +
+            '<div style="background:var(--bg);border-radius:6px;padding:12px 16px;font-size:13px;line-height:2">' +
+            '<strong>準備するもの：</strong><br>' +
+            '・各工程の<strong>直接作業者数</strong><br>' +
+            '・作業者<strong>1人あたりの年間人件費</strong>（賃金+賞与+福利厚生）<br>' +
+            '・各工程で使う<strong>設備の年間費用</strong>（リース料・減価償却費）' +
+            (isLv4 ? '<br>・機械主体の工程：<strong>設備台数</strong>と<strong>1台あたり稼働時間</strong>' : '') + '</div>'
+        },
+        {
+          title: "工程の情報を入力",
+          html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">登録する工程の情報を入力してください。</p>' +
+            '<div class="form-grid" style="max-width:400px">' +
+            '<label>工程名</label><input type="text" id="sg-dept-name" placeholder="例: シート加工">' +
+            '<label>直接作業者数</label><input type="number" id="sg-dept-workers" class="input-num" step="1" value="0">' +
+            '<label>1人あたり年間人件費(円)</label><input type="number" id="sg-dept-labor" class="input-num" step="1" value="3500000">' +
+            '<label>標準機械装置費用(年/円)</label><input type="number" id="sg-dept-machine" class="input-num" step="1" value="0">' +
+            machineFields +
+            '</div>' +
+            '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
+            '人件費の目安：正社員1人あたり300〜450万円/年（賃金+賞与+福利厚生）<br>' +
+            '機械装置費用：その工程で使う設備のリース料や減価償却費の年間合計' + machineHelp + '</div>'
+        },
+        {
+          title: "登録完了！",
+          html: '<div style="text-align:center;padding:20px 0">' +
+            '<div style="font-size:40px;margin-bottom:12px">🏭</div>' +
+            '<p style="font-size:16px;font-weight:600;margin-bottom:8px">工程を登録しました</p>' +
+            '<p style="font-size:14px;color:var(--text-muted);line-height:1.8">続けて他の工程も「+ 部門追加」または「📝 ガイド付きで追加する」から登録してください。<br>全工程の登録が終わったら「製品原価」タブへ進みます。</p>' +
+            '</div>'
+        }
+      ];
+    }
 
-    // 製品ガイドのステップ
-    var productSteps = [
-      {
-        title: "製品を登録しましょう",
-        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">原価を分析したい製品を登録します。全製品を入れる必要はありません。重要度の高い製品から始めてください。</p>' +
-          '<div style="background:var(--bg);border-radius:6px;padding:12px 16px;font-size:13px;line-height:2">' +
-          '<strong>準備するもの：</strong><br>' +
-          '・製品の<strong>販売価格</strong>（1個あたり）<br>' +
-          '・<strong>材料費</strong>（1個あたりの主要材料費）<br>' +
-          '・各工程での<strong>作業時間</strong>（1個あたり、時間単位）</div>'
-      },
-      {
-        title: "製品の基本情報を入力",
-        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">原価を分析したい製品の情報を入力してください。</p>' +
-          '<div class="form-grid" style="max-width:400px">' +
-          '<label>製品コード</label><input type="text" id="sg-prod-code" placeholder="例: A">' +
-          '<label>製品名</label><input type="text" id="sg-prod-name" placeholder="例: 製品A">' +
-          '<label>目標販売価格(円)</label><input type="number" id="sg-prod-price" class="input-num" step="1" value="0">' +
-          '<label>直接材料費(円/個)</label><input type="number" id="sg-prod-material" class="input-num" step="1" value="0">' +
-          '</div>' +
-          '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
-          '材料費：この製品1個を作るのに使う材料の合計金額<br>' +
-          '工程の作業時間は登録後に「製造ルーティング」で設定します</div>'
-      },
-      {
-        title: "登録完了！",
-        html: '<div style="text-align:center;padding:20px 0">' +
-          '<div style="font-size:40px;margin-bottom:12px">📊</div>' +
-          '<p style="font-size:16px;font-weight:600;margin-bottom:8px">製品を登録しました</p>' +
-          '<p style="font-size:14px;color:var(--text-muted);line-height:1.8">製品カードの「製造ルーティング」で各工程の作業時間を設定すると、原価と利益が自動計算されます。<br>「+ 工程追加」ボタンで工程を追加し、作業時間(h/個)を入力してください。</p>' +
-          '</div>'
-      }
-    ];
+    // 製品ガイドのステップ（動的生成）
+    function buildProductSteps() {
+      var data = loadData();
+      var freightOn = data.companySettings.enable_freight_cost;
+      var freightField = freightOn
+        ? '<label>直接運送費(円/個)</label><input type="number" id="sg-prod-freight" class="input-num" step="1" value="0">'
+        : '';
+      return [
+        {
+          title: "製品を登録しましょう",
+          html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">原価を分析したい製品を登録します。全製品を入れる必要はありません。重要度の高い製品から始めてください。</p>' +
+            '<div style="background:var(--bg);border-radius:6px;padding:12px 16px;font-size:13px;line-height:2">' +
+            '<strong>準備するもの：</strong><br>' +
+            '・製品の<strong>販売価格</strong>（1個あたり）<br>' +
+            '・<strong>材料費</strong>（1個あたりの主要材料費）<br>' +
+            '・<strong>外注費</strong>（外注加工がある場合）<br>' +
+            (freightOn ? '・<strong>直接運送費</strong>（1個あたりの運送費）<br>' : '') +
+            '・各工程での<strong>作業時間</strong>（1個あたり、時間単位）</div>'
+        },
+        {
+          title: "製品の基本情報を入力",
+          html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">原価を分析したい製品の情報を入力してください。</p>' +
+            '<div class="form-grid" style="max-width:400px">' +
+            '<label>製品コード</label><input type="text" id="sg-prod-code" placeholder="例: A">' +
+            '<label>製品名</label><input type="text" id="sg-prod-name" placeholder="例: 製品A">' +
+            '<label>目標販売価格(円)</label><input type="number" id="sg-prod-price" class="input-num" step="1" value="0">' +
+            '<label>直接材料費(円/個)</label><input type="number" id="sg-prod-material" class="input-num" step="1" value="0">' +
+            '<label>直接外注費(円/個)</label><input type="number" id="sg-prod-outsource" class="input-num" step="1" value="0">' +
+            freightField +
+            '</div>' +
+            '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
+            '材料費：この製品1個に使う材料の合計金額<br>' +
+            '外注費：メッキ・熱処理など外部委託の費用（なければ0）<br>' +
+            '工程の作業時間は登録後に「製造ルーティング」で設定します</div>'
+        },
+        {
+          title: "登録完了！",
+          html: '<div style="text-align:center;padding:20px 0">' +
+            '<div style="font-size:40px;margin-bottom:12px">📊</div>' +
+            '<p style="font-size:16px;font-weight:600;margin-bottom:8px">製品を登録しました</p>' +
+            '<p style="font-size:14px;color:var(--text-muted);line-height:1.8">製品カードの「製造ルーティング」で各工程の作業時間を設定すると、原価と利益が自動計算されます。<br>「+ 工程追加」ボタンで工程を追加し、作業時間(h/個)を入力してください。</p>' +
+            '</div>'
+        }
+      ];
+    }
 
     function startGuide(guideSteps, onSave) {
       var localStep = 0;
@@ -796,7 +823,7 @@
 
     var deptGuideBtn = document.getElementById("btn-dept-guide");
     if (deptGuideBtn) deptGuideBtn.addEventListener("click", function() {
-      startGuide(deptSteps, function(step) {
+      startGuide(buildDeptSteps(), function(step) {
         if (step === 1) {
           var name = (document.getElementById("sg-dept-name").value || "").trim();
           if (!name) return;
@@ -812,10 +839,10 @@
             annual_labor_cost: workers * laborPer,
             allocation_base_type: "operating_hours",
             allocation_base_value: 0,
-            is_machine_based: false,
+            is_machine_based: document.getElementById("sg-dept-machine-based") ? document.getElementById("sg-dept-machine-based").value === "true" : false,
             standard_machine_cost: machine,
-            machine_count: 0,
-            machine_operating_hours: 0
+            machine_count: document.getElementById("sg-dept-machine-count") ? parseInt(document.getElementById("sg-dept-machine-count").value) || 0 : 0,
+            machine_operating_hours: document.getElementById("sg-dept-machine-hours") ? parseInt(document.getElementById("sg-dept-machine-hours").value) || 0 : 0
           });
           saveData(data);
           showToast("部門「" + name + "」を登録しました", "success");
@@ -825,10 +852,11 @@
 
     var prodGuideBtn = document.getElementById("btn-product-guide");
     if (prodGuideBtn) prodGuideBtn.addEventListener("click", function() {
-      startGuide(productSteps, function(step) {
+      startGuide(buildProductSteps(), function(step) {
         if (step === 1) {
           var name = (document.getElementById("sg-prod-name").value || "").trim();
           if (!name) return;
+          var freightEl = document.getElementById("sg-prod-freight");
           var data = loadData();
           data.products.push({
             id: nextId(data.products),
@@ -836,8 +864,8 @@
             product_name: name,
             target_sales_price: parseFloat(document.getElementById("sg-prod-price").value) || 0,
             direct_material_cost: parseFloat(document.getElementById("sg-prod-material").value) || 0,
-            direct_outsourcing_cost: 0,
-            special_direct_expense: 0,
+            direct_outsourcing_cost: parseFloat(document.getElementById("sg-prod-outsource").value) || 0,
+            special_direct_expense: freightEl ? parseFloat(freightEl.value) || 0 : 0,
             routings: []
           });
           saveData(data);
