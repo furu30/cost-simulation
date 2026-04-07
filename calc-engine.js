@@ -262,10 +262,16 @@
       };
     }
 
-    // 方式2: 直間分離あり → 限界利益算出可能
-    var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense;
-    var marginalProfit = sellingPrice - directCostTotal;
+    // 方式2: 直間分離あり
+    // 変動費 = 材料費 + 外注費（短期的に生産量に比例する費用）
+    var variableCost = materialCost + outsourcingCost;
+    var marginalProfit = sellingPrice - variableCost;
     var marginalProfitRate = sellingPrice > 0 ? marginalProfit / sellingPrice * 100 : 0;
+
+    // 直接原価 = 変動費 + 加工費（人件費・機械装置を時間あたりに変動費化したもの）
+    var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense;
+    var contributionProfit = sellingPrice - directCostTotal;
+    var contributionProfitRate = sellingPrice > 0 ? contributionProfit / sellingPrice * 100 : 0;
 
     return {
       product: product, calcLevel: 2,
@@ -281,9 +287,12 @@
       sellingPrice: sellingPrice,
       operatingProfit: operatingProfit,
       operatingProfitRate: operatingProfitRate,
-      directCostTotal: directCostTotal,
+      variableCost: variableCost,
       marginalProfit: marginalProfit,
-      marginalProfitRate: marginalProfitRate
+      marginalProfitRate: marginalProfitRate,
+      directCostTotal: directCostTotal,
+      contributionProfit: contributionProfit,
+      contributionProfitRate: contributionProfitRate
     };
   }
 
@@ -348,16 +357,19 @@
       operatingProfitRate: operatingProfitRate
     };
 
-    // 方式3/4: 限界利益
+    // 方式3/4: 限界利益・貢献利益
     if (calcLevel >= 3) {
+      var variableCost = materialCost + outsourcingCost;
+      result.variableCost = variableCost;
+      result.marginalProfit = sellingPrice - variableCost;
+      result.marginalProfitRate = sellingPrice > 0 ? result.marginalProfit / sellingPrice * 100 : 0;
+
       var directCostTotal = materialCost + totalDirectProcess + outsourcingCost + specialExpense;
-      var marginalProfit = sellingPrice - directCostTotal;
-      var marginalProfitRate = sellingPrice > 0 ? marginalProfit / sellingPrice * 100 : 0;
       result.directCostTotal = directCostTotal;
       result.totalDirectProcess = totalDirectProcess;
       result.totalIndirectProcess = totalIndirectProcess;
-      result.marginalProfit = marginalProfit;
-      result.marginalProfitRate = marginalProfitRate;
+      result.contributionProfit = sellingPrice - directCostTotal;
+      result.contributionProfitRate = sellingPrice > 0 ? result.contributionProfit / sellingPrice * 100 : 0;
     }
 
     return result;

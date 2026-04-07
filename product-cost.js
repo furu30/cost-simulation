@@ -20,6 +20,9 @@
   function enrichCostResult(cost, cs, departments) {
     // 製造間接費は部門配賦済みなのでそのまま使う
     cost.mfgIndirectProcess = cost.totalIndirectProcess || 0;
+    // 製造間接費の計算式情報を保存
+    var mfgAllocType = cs.mfg_alloc_type || cs.allocation_base_type || "operating_hours";
+    cost.mfgCalcInfo = { allocType: mfgAllocType };
 
     // 販管費を全社ベースで製品に配賦
     var sgaTotal = cs.sga_indirect_expenses || 0;
@@ -195,33 +198,54 @@
       html += '<div style="margin-top:6px;font-size:11px;color:#64748b">※ 方式1では直接費・間接費を区別しないため、限界利益・製造利益は算出されません。方式2以上をご利用ください。</div>';
 
     } else {
-      // ── 方式2以上: 直接原価 → 製造原価 → 総原価 ──
+      // ── 方式2以上: 変動費 → 直接原価 → 製造原価 → 総原価 ──
+
+      // 変動費小計
+      html += '<div class="cost-line cost-subtotal" style="background:#eff6ff;border-left:3px solid #93c5fd"><span>▶ 変動費（材料費+外注費）</span><span>' + app.formatYen(cost.variableCost || 0) + ' 円</span></div>';
+
+      // 加工費の注記（直接レートのみ、製造間接費は含まない）
+      html += '<div style="font-size:11px;color:var(--text-muted);padding-left:16px;margin:2px 0 4px">※ 加工費は直接レート（人件費+機械装置費÷稼働時間）で計算。製造間接費は下記で別途配賦。</div>';
+
+      // 直接原価小計
       html += '<div class="cost-line cost-subtotal direct"><span>▶ 直接原価</span><span>' + app.formatYen(cost.directCostTotal) + ' 円</span></div>';
+
+      // 製造間接費（部門配賦）+ 計算式
       html += '<div class="cost-line cost-indent"><span>＋ 製造間接費（部門配賦）</span><span>' + app.formatYen(cost.mfgIndirectProcess) + ' 円</span></div>';
-      html += '<div class="cost-line cost-subtotal manufacturing"><span>▶ 製造原価</span><span>' + app.formatYen(cost.manufacturingCost) + ' 円</span></div>';
-      html += '<div class="cost-line cost-indent"><span>＋ 販管費（製品配賦）</span><span>' + app.formatYen(cost.sgaIndirectProcess) + ' 円</span></div>';
-      // 販管費の配賦計算式を表示
-      if (cost.sgaCalcInfo) {
-        var info = cost.sgaCalcInfo;
-        var basisLabel = info.allocType === "direct_cost" ? "直接原価" : "稼働時間";
-        var unitLabel = info.allocType === "direct_cost" ? "円" : "h";
-        html += '<div class="cost-indent" style="font-size:11px;color:var(--text-muted);padding-left:16px;margin-top:2px">';
-        html += '販管費 ' + app.formatNum(Math.round(info.sgaTotalYen / 1000)) + '千円 × ' + basisLabel + '比（';
-        html += app.formatNum(Math.round(info.productValue * 100) / 100) + unitLabel + ' ÷ 全社 ' + app.formatNum(Math.round(info.companyTotal)) + unitLabel;
-        var pctStr = info.ratio < 0.01 ? (info.ratio * 100).toFixed(4) : (info.ratio * 100).toFixed(2);
-        html += ' = ' + pctStr + '%）';
+      if (cost.mfgCalcInfo && cost.routingDetails && cost.routingDetails.length > 0) {
+        var mfgBasis = cost.mfgCalcInfo.allocType === "direct_cost" ? "直接原価比" : cost.mfgCalcInfo.allocType === "manual" ? "手動比率" : "稼働時間比";
+        html += '<div style="font-size:11px;color:var(--text-muted);padding-left:16px;margin-top:2px">';
+        html += '各部門の製造間接費（' + mfgBasis + 'で配賦）× 工程時間で算出';
         html += '</div>';
       }
+
+      // 製造原価小計
+      html += '<div class="cost-line cost-subtotal manufacturing"><span>▶ 製造原価</span><span>' + app.formatYen(cost.manufacturingCost) + ' 円</span></div>';
+
+      // 販管費（製品配賦）+ 計算式
+      html += '<div class="cost-line cost-indent"><span>＋ 販管費（製品配賦）</span><span>' + app.formatYen(cost.sgaIndirectProcess) + ' 円</span></div>';
+      if (cost.sgaCalcInfo) {
+        var sInfo = cost.sgaCalcInfo;
+        var sBasis = sInfo.allocType === "direct_cost" ? "直接原価" : "稼働時間";
+        var sUnit = sInfo.allocType === "direct_cost" ? "円" : "h";
+        html += '<div style="font-size:11px;color:var(--text-muted);padding-left:16px;margin-top:2px">';
+        html += '販管費 ' + app.formatNum(Math.round(sInfo.sgaTotalYen / 1000)) + '千円 × この製品の' + sBasis + '（';
+        html += app.formatNum(Math.round(sInfo.productValue * 10000) / 10000) + sUnit + '）÷ 全社（' + app.formatNum(Math.round(sInfo.companyTotal)) + sUnit + '）';
+        html += '</div>';
+      }
+
+      // 総原価
       html += '<div class="cost-line cost-total"><span>▶ 総原価</span><span>' + app.formatYen(cost.totalCost) + ' 円</span></div>';
 
-      // ── 3利益ライン ──
+      // ── 4利益ライン ──
       var mgClass = cost.marginalProfit >= 0 ? "profit-positive" : "profit-negative";
+      var ctClass = (cost.contributionProfit || 0) >= 0 ? "profit-positive" : "profit-negative";
       var mfClass = cost.manufacturingProfit >= 0 ? "profit-positive" : "profit-negative";
       var opClass = cost.operatingProfit >= 0 ? "profit-positive" : "profit-negative";
-      html += '<div class="cost-breakdown" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">';
-      html += '<div class="profit-box marginal"><div class="profit-label">限界利益（直接原価ベース）</div><div class="profit-value ' + mgClass + '">' + app.formatYen(cost.marginalProfit) + ' 円 (' + cost.marginalProfitRate.toFixed(1) + '%)</div></div>';
-      html += '<div class="profit-box manufacturing"><div class="profit-label">製造利益（製造原価ベース）</div><div class="profit-value ' + mfClass + '">' + app.formatYen(cost.manufacturingProfit) + ' 円 (' + cost.manufacturingProfitRate.toFixed(1) + '%)</div></div>';
-      html += '<div class="profit-box operating"><div class="profit-label">営業利益（総原価ベース）</div><div class="profit-value ' + opClass + '">' + app.formatYen(cost.operatingProfit) + ' 円 (' + cost.operatingProfitRate.toFixed(1) + '%)</div></div>';
+      html += '<div class="cost-breakdown" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:8px">';
+      html += '<div class="profit-box" style="background:#eff6ff;border:1px solid #bfdbfe"><div class="profit-label">限界利益</div><div class="profit-label" style="font-size:10px">売上−変動費</div><div class="profit-value ' + mgClass + '">' + app.formatYen(cost.marginalProfit) + ' 円<br>(' + cost.marginalProfitRate.toFixed(1) + '%)</div></div>';
+      html += '<div class="profit-box marginal"><div class="profit-label">貢献利益</div><div class="profit-label" style="font-size:10px">売上−直接原価</div><div class="profit-value ' + ctClass + '">' + app.formatYen(cost.contributionProfit || 0) + ' 円<br>(' + (cost.contributionProfitRate || 0).toFixed(1) + '%)</div></div>';
+      html += '<div class="profit-box manufacturing"><div class="profit-label">製造利益</div><div class="profit-label" style="font-size:10px">売上−製造原価</div><div class="profit-value ' + mfClass + '">' + app.formatYen(cost.manufacturingProfit) + ' 円<br>(' + cost.manufacturingProfitRate.toFixed(1) + '%)</div></div>';
+      html += '<div class="profit-box operating"><div class="profit-label">営業利益</div><div class="profit-label" style="font-size:10px">売上−総原価</div><div class="profit-value ' + opClass + '">' + app.formatYen(cost.operatingProfit) + ' 円<br>(' + cost.operatingProfitRate.toFixed(1) + '%)</div></div>';
       html += '</div>';
     }
 
@@ -447,17 +471,17 @@
       });
       allCosts.forEach(function(c) { enrichCostResult(c, cs, departments); });
 
-      html += '<thead><tr><th>製品</th><th>直接材料費</th><th>直接加工費</th><th>直接外注費</th><th>直接原価計</th><th>製造間接費</th><th>製造原価</th><th>販管費</th><th>総原価</th><th>販売価格</th><th>限界利益率</th><th>製造利益率</th><th>営業利益率</th></tr></thead><tbody>';
+      html += '<thead><tr><th>製品</th><th>変動費</th><th>加工費</th><th>直接原価計</th><th>製造間接費</th><th>製造原価</th><th>販管費</th><th>総原価</th><th>販売価格</th><th>限界利益率</th><th>貢献利益率</th><th>製造利益率</th><th>営業利益率</th></tr></thead><tbody>';
       allCosts.forEach(function(c, i) {
         var p = products[i];
         var mgClass = c.marginalProfitRate >= 0 ? "profit-positive" : "profit-negative";
+        var ctClass = (c.contributionProfitRate || 0) >= 0 ? "profit-positive" : "profit-negative";
         var mfClass = c.manufacturingProfitRate >= 0 ? "profit-positive" : "profit-negative";
         var opClass = c.operatingProfitRate >= 0 ? "profit-positive" : "profit-negative";
         html += '<tr>' +
           '<td>' + app.escHtml(p.product_code || "") + ' ' + app.escHtml(p.product_name) + '</td>' +
-          '<td class="num">' + app.formatYen(c.materialCost) + '</td>' +
-          '<td class="num">' + app.formatYen(c.totalDirectProcess) + '</td>' +
-          '<td class="num">' + app.formatYen(c.outsourcingCost) + '</td>' +
+          '<td class="num">' + app.formatYen(c.variableCost || 0) + '</td>' +
+          '<td class="num">' + app.formatYen(c.totalDirectProcess || 0) + '</td>' +
           '<td class="num" style="font-weight:600">' + app.formatYen(c.directCostTotal) + '</td>' +
           '<td class="num">' + app.formatYen(c.mfgIndirectProcess) + '</td>' +
           '<td class="num" style="font-weight:600">' + app.formatYen(c.manufacturingCost) + '</td>' +
@@ -465,6 +489,7 @@
           '<td class="num" style="font-weight:600">' + app.formatYen(c.totalCost) + '</td>' +
           '<td class="num">' + app.formatYen(c.sellingPrice) + '</td>' +
           '<td class="num ' + mgClass + '" style="font-weight:600">' + c.marginalProfitRate.toFixed(1) + '%</td>' +
+          '<td class="num ' + ctClass + '" style="font-weight:600">' + (c.contributionProfitRate || 0).toFixed(1) + '%</td>' +
           '<td class="num ' + mfClass + '" style="font-weight:600">' + c.manufacturingProfitRate.toFixed(1) + '%</td>' +
           '<td class="num ' + opClass + '" style="font-weight:600">' + c.operatingProfitRate.toFixed(1) + '%</td>' +
         '</tr>';
