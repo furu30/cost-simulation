@@ -130,7 +130,7 @@ body {
   align-items: center;
 }
 .form-grid.four-col {
-  grid-template-columns: 160px 1fr 120px 1fr;
+  grid-template-columns: 160px 1fr 150px 1fr;
 }
 .form-grid label {
   font-size: 13px;
