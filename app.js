@@ -508,10 +508,10 @@
         html += '</div></div>';
       } else if (step === 2 && answers.q1 === "detail") {
         html += '<div class="wizard-question">';
-        html += '<p style="font-size:15px;font-weight:600;margin-bottom:12px">Q2. NC加工機など、作業者が複数台を同時に担当する工程（多台持ち）はありますか？</p>';
+        html += '<p style="font-size:15px;font-weight:600;margin-bottom:12px">Q2. 機械の稼働時間が作業者の就業時間と異なる工程はありますか？</p>';
         html += '<div class="wizard-options">';
-        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px;margin-bottom:8px" data-val="no"><strong>ない（人手主体の工程のみ）</strong><br><span style="font-size:12px;color:var(--text-muted)">作業者1人が1台を操作する工程がほとんど</span></button>';
-        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px" data-val="yes"><strong>ある（機械主体の工程がある）</strong><br><span style="font-size:12px;color:var(--text-muted)">NC旋盤やマシニングセンタなど、多台持ち工程がある</span></button>';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px;margin-bottom:8px" data-val="no"><strong>ない（人手主体の工程のみ）</strong><br><span style="font-size:12px;color:var(--text-muted)">作業者の就業時間＝工程の稼働時間である</span></button>';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px" data-val="yes"><strong>ある（機械主体の工程がある）</strong><br><span style="font-size:12px;color:var(--text-muted)">多台持ち、夜間無人運転など、機械稼働時間と人の就業時間が異なる工程がある</span></button>';
         html += '</div></div>';
       } else if (step === 3) {
         // 結果表示
@@ -526,7 +526,7 @@
           1: "全工程同一の統一レートで計算します。最もシンプルで、まず全体の利益を把握するのに最適です。",
           2: "統一レートですが、直接費と間接費を分離します。限界利益・貢献利益の分析が可能になります。",
           3: "工程ごとに異なるアワーレートを算出します。どの工程にコストがかかっているか詳しく分析できます。",
-          4: "方式3に加え、機械主体の工程を区別して計算します。多台持ち工程がある場合に最も正確です。"
+          4: "方式3に加え、機械主体の工程を区別して計算します。多台持ちや夜間無人運転など、機械稼働時間が人の就業時間と異なる工程がある場合に最適です。"
         };
         html += '<div style="text-align:center;padding:16px">';
         html += '<div style="font-size:14px;color:var(--text-muted);margin-bottom:8px">おすすめの方式</div>';

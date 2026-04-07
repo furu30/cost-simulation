@@ -70,7 +70,7 @@
             </button>
             <button class="level-btn" data-level="4">
               <span class="level-badge">方式4</span>
-              <span class="level-name">部門別アワーレート（人手＋機械混在）</span>
+              <span class="level-name">部門別アワーレート（機械稼働時間対応）</span>
               <span class="level-desc">直接原価レート＋間接費配賦レート</span>
             </button>
           </div>
@@ -318,7 +318,7 @@
           <tr><td><strong>方式1</strong></td><td>簡易方式</td><td>全工程同一の統一レート</td><td>工程差が小さい場合。まずはここから</td></tr>
           <tr><td><strong>方式2</strong></td><td>全社統一（直接/間接分離）</td><td>統一レートだが直接/間接を分離</td><td>間接費の比率を把握したい場合</td></tr>
           <tr><td><strong>方式3</strong></td><td>部門別（人手主体）</td><td>部門ごとに異なるレート</td><td>工程ごとのコスト差が大きい場合</td></tr>
-          <tr><td><strong>方式4</strong></td><td>部門別（機械混在）</td><td>機械主体工程を区別</td><td>NC加工機等の多台持ち工程がある場合</td></tr>
+          <tr><td><strong>方式4</strong></td><td>部門別（機械混在）</td><td>機械主体工程を区別</td><td>多台持ちや夜間無人運転など、機械稼働時間≠就業時間の工程がある場合</td></tr>
         </tbody>
       </table>
 
@@ -397,7 +397,7 @@
 
       <div class="guide-callout guide-callout-info">
         <strong>💡 方式4で「機械主体」工程の場合</strong><br>
-        稼働形態を「機械主体（多台持ち等）」に変更し、設備台数と1台あたり稼働時間(h/年)を追加入力してください。
+        稼働形態を「機械主体」に変更し、設備台数と1台あたり稼働時間(h/年)を追加入力してください。多台持ちや夜間無人運転など、機械の稼働時間が作業者の就業時間と異なる場合に使用します。
       </div>
 
       <h3>2-2. アワーレート一覧を確認</h3>
@@ -548,7 +548,7 @@
             <label>稼働形態</label>
             <select id="dept-is-machine-based">
               <option value="false">人手主体</option>
-              <option value="true">機械主体（多台持ち等）</option>
+              <option value="true">機械主体（稼働時間≠就業時間）</option>
             </select>
           </div>
           <div id="machine-detail-fields" style="display:none">
