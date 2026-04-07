@@ -82,6 +82,45 @@
     return cost;
   }
 
+  function renderDiagnosis(cost, level) {
+    if (!cost.sellingPrice || cost.sellingPrice <= 0) return '';
+    var html = '<div style="margin-top:10px;padding:10px 14px;border-radius:6px;font-size:13px;line-height:1.7;';
+    var opRate = cost.operatingProfitRate || 0;
+    var messages = [];
+
+    // 営業利益ベースの総合診断
+    if (opRate < 0) {
+      html += 'background:#fef2f2;border-left:3px solid #dc2626;color:#991b1b">';
+      messages.push('<strong>⚠ 赤字製品です。</strong>販売価格が総原価を下回っています。価格の見直し、または原価低減が必要です。');
+    } else if (opRate < 3) {
+      html += 'background:#fffbeb;border-left:3px solid #f59e0b;color:#92400e">';
+      messages.push('<strong>利益が薄い状況です。</strong>材料費の見直しや加工時間の短縮を検討してください。');
+    } else if (opRate < 10) {
+      html += 'background:#f0fdf4;border-left:3px solid #16a34a;color:#166534">';
+      messages.push('一般的な製造業の利益水準です。');
+    } else {
+      html += 'background:#f0fdf4;border-left:3px solid #16a34a;color:#166534">';
+      messages.push('健全な利益水準です。');
+    }
+
+    // 方式2以上: 詳細診断
+    if (level >= 2) {
+      var matRate = cost.sellingPrice > 0 ? (cost.materialCost / cost.sellingPrice * 100) : 0;
+      if (matRate > 60) {
+        messages.push('材料費率が ' + matRate.toFixed(0) + '% と高めです。材料の見直しや歩留まり改善が効果的です。');
+      }
+      var ctRate = cost.contributionProfitRate || 0;
+      if (ctRate < 0) {
+        messages.push('貢献利益がマイナスです。この製品は作るほど損失が拡大します。');
+      } else if (ctRate > 0 && opRate < 0) {
+        messages.push('貢献利益はプラスなので、固定費回収には貢献しています。受注量の確保も一つの判断です。');
+      }
+    }
+
+    html += messages.join('<br>') + '</div>';
+    return html;
+  }
+
   function renderProducts(data) {
     var container = document.getElementById("product-container");
     var products = data.products || [];
@@ -195,7 +234,8 @@
       // ── 営業利益のみ ──
       var opClass = cost.operatingProfit >= 0 ? "profit-positive" : "profit-negative";
       html += '<div class="profit-box operating" style="margin-top:8px"><div class="profit-label">営業利益（販売価格 − 総原価）</div><div class="profit-value ' + opClass + '">' + app.formatYen(cost.operatingProfit) + ' 円 (' + cost.operatingProfitRate.toFixed(1) + '%)</div></div>';
-      html += '<div style="margin-top:6px;font-size:11px;color:#64748b">※ 方式1では直接費・間接費を区別しないため、限界利益・製造利益は算出されません。方式2以上をご利用ください。</div>';
+      html += '<div style="margin-top:6px;font-size:11px;color:#64748b">※ 方式1では直接費・間接費を区別しないため、限界利益・貢献利益・製造利益は算出されません。方式2以上をご利用ください。</div>';
+      html += renderDiagnosis(cost, level);
 
     } else {
       // ── 方式2以上: 変動費 → 直接原価 → 製造原価 → 総原価 ──
@@ -247,6 +287,9 @@
       html += '<div class="profit-box manufacturing"><div class="profit-label">製造利益</div><div class="profit-label" style="font-size:10px">売上−製造原価</div><div class="profit-value ' + mfClass + '">' + app.formatYen(cost.manufacturingProfit) + ' 円<br>(' + cost.manufacturingProfitRate.toFixed(1) + '%)</div></div>';
       html += '<div class="profit-box operating"><div class="profit-label">営業利益</div><div class="profit-label" style="font-size:10px">売上−総原価</div><div class="profit-value ' + opClass + '">' + app.formatYen(cost.operatingProfit) + ' 円<br>(' + cost.operatingProfitRate.toFixed(1) + '%)</div></div>';
       html += '</div>';
+
+      // ── 診断コメント ──
+      html += renderDiagnosis(cost, level);
     }
 
     // ── 原価構成バーチャート ──

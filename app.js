@@ -474,6 +474,94 @@
     });
   }
 
+  // ══ 方式選択ウィザード ══
+  function initLevelWizard() {
+    var btn = document.getElementById("btn-level-wizard");
+    var modal = document.getElementById("level-wizard-modal");
+    var closeBtn = document.getElementById("btn-wizard-close");
+    var content = document.getElementById("wizard-content");
+    if (!btn || !modal) return;
+
+    btn.addEventListener("click", function() {
+      showWizardStep(1);
+      modal.style.display = "";
+    });
+    closeBtn.addEventListener("click", function() { modal.style.display = "none"; });
+    modal.addEventListener("click", function(e) { if (e.target === modal) modal.style.display = "none"; });
+
+    function showWizardStep(step, answers) {
+      answers = answers || {};
+      var html = '';
+      if (step === 1) {
+        html += '<div class="wizard-question">';
+        html += '<p style="font-size:15px;font-weight:600;margin-bottom:12px">Q1. まずは簡単に原価を把握したいですか？<br>それとも工程ごとの詳細なコストを知りたいですか？</p>';
+        html += '<div class="wizard-options">';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px;margin-bottom:8px" data-val="simple"><strong>まずは全体像を把握したい</strong><br><span style="font-size:12px;color:var(--text-muted)">工程の差は気にせず、製品ごとの利益がわかればOK</span></button>';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px" data-val="detail"><strong>工程ごとのコストを詳しく知りたい</strong><br><span style="font-size:12px;color:var(--text-muted)">どの工程にコストがかかっているか分析したい</span></button>';
+        html += '</div></div>';
+      } else if (step === 2 && answers.q1 === "simple") {
+        html += '<div class="wizard-question">';
+        html += '<p style="font-size:15px;font-weight:600;margin-bottom:12px">Q2. 直接費と間接費を分けて分析したいですか？</p>';
+        html += '<div class="wizard-options">';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px;margin-bottom:8px" data-val="no"><strong>分けなくてよい</strong><br><span style="font-size:12px;color:var(--text-muted)">とにかくシンプルに原価と利益を知りたい</span></button>';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px" data-val="yes"><strong>分けて分析したい</strong><br><span style="font-size:12px;color:var(--text-muted)">間接費の影響も把握したい</span></button>';
+        html += '</div></div>';
+      } else if (step === 2 && answers.q1 === "detail") {
+        html += '<div class="wizard-question">';
+        html += '<p style="font-size:15px;font-weight:600;margin-bottom:12px">Q2. NC加工機など、作業者が複数台を同時に担当する工程（多台持ち）はありますか？</p>';
+        html += '<div class="wizard-options">';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px;margin-bottom:8px" data-val="no"><strong>ない（人手主体の工程のみ）</strong><br><span style="font-size:12px;color:var(--text-muted)">作業者1人が1台を操作する工程がほとんど</span></button>';
+        html += '<button class="btn btn-outline wizard-opt" style="width:100%;text-align:left;padding:12px 16px" data-val="yes"><strong>ある（機械主体の工程がある）</strong><br><span style="font-size:12px;color:var(--text-muted)">NC旋盤やマシニングセンタなど、多台持ち工程がある</span></button>';
+        html += '</div></div>';
+      } else if (step === 3) {
+        // 結果表示
+        var rec = 1;
+        if (answers.q1 === "simple" && answers.q2 === "no") rec = 1;
+        else if (answers.q1 === "simple" && answers.q2 === "yes") rec = 2;
+        else if (answers.q1 === "detail" && answers.q2 === "no") rec = 3;
+        else if (answers.q1 === "detail" && answers.q2 === "yes") rec = 4;
+
+        var names = { 1: "方式1：簡易方式", 2: "方式2：全社統一（直間分離）", 3: "方式3：部門別（人手主体）", 4: "方式4：部門別（機械混在）" };
+        var descs = {
+          1: "全工程同一の統一レートで計算します。最もシンプルで、まず全体の利益を把握するのに最適です。",
+          2: "統一レートですが、直接費と間接費を分離します。限界利益・貢献利益の分析が可能になります。",
+          3: "工程ごとに異なるアワーレートを算出します。どの工程にコストがかかっているか詳しく分析できます。",
+          4: "方式3に加え、機械主体の工程を区別して計算します。多台持ち工程がある場合に最も正確です。"
+        };
+        html += '<div style="text-align:center;padding:16px">';
+        html += '<div style="font-size:14px;color:var(--text-muted);margin-bottom:8px">おすすめの方式</div>';
+        html += '<div style="font-size:22px;font-weight:700;color:var(--primary);margin-bottom:8px">' + names[rec] + '</div>';
+        html += '<p style="font-size:14px;color:var(--text);margin-bottom:20px">' + descs[rec] + '</p>';
+        html += '<button class="btn btn-primary wizard-apply" data-level="' + rec + '" style="padding:10px 32px;font-size:15px">この方式を設定する</button>';
+        html += '<p style="margin-top:8px;font-size:12px;color:var(--text-muted)">後からいつでも変更できます</p>';
+        html += '</div>';
+      }
+
+      content.innerHTML = html;
+
+      // イベント登録
+      content.querySelectorAll(".wizard-opt").forEach(function(optBtn) {
+        optBtn.addEventListener("click", function() {
+          if (step === 1) { answers.q1 = optBtn.dataset.val; showWizardStep(2, answers); }
+          else if (step === 2) { answers.q2 = optBtn.dataset.val; showWizardStep(3, answers); }
+        });
+      });
+      var applyBtn = content.querySelector(".wizard-apply");
+      if (applyBtn) {
+        applyBtn.addEventListener("click", function() {
+          var lv = parseInt(applyBtn.dataset.level);
+          var data = loadData();
+          data.companySettings.calc_level = lv;
+          saveData(data);
+          applyCalcLevel(lv);
+          reloadAll();
+          modal.style.display = "none";
+          showToast("方式" + lv + "に設定しました", "success");
+        });
+      }
+    }
+  }
+
   // ══ Escキーでモーダルを閉じる ══
   function initEscapeKey() {
     document.addEventListener("keydown", function(e) {
@@ -485,6 +573,12 @@
       var deptModal = document.getElementById("dept-modal");
       if (deptModal && deptModal.style.display !== "none") {
         deptModal.style.display = "none";
+        return;
+      }
+      // ウィザードモーダル
+      var wizard = document.getElementById("level-wizard-modal");
+      if (wizard && wizard.style.display !== "none") {
+        wizard.style.display = "none";
         return;
       }
       // オンボーディングモーダル
@@ -525,6 +619,7 @@
     initLevelSelector();
     initFreightToggle();
     initEscapeKey();
+    initLevelWizard();
 
     if (window.CostApp.baseData) window.CostApp.baseData.init();
     if (window.CostApp.deptCost) window.CostApp.deptCost.init();
