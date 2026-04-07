@@ -678,65 +678,195 @@
       }
     ];
 
-    var currentStep = 0;
+    // 部門ガイドのステップ
+    var deptSteps = [
+      {
+        title: "部門（工程）を登録しましょう",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">製品が通る各工程を「部門」として登録します。工程ごとのコストを把握するために必要です。</p>' +
+          '<div style="background:var(--bg);border-radius:6px;padding:12px 16px;font-size:13px;line-height:2">' +
+          '<strong>準備するもの：</strong><br>' +
+          '・各工程の<strong>直接作業者数</strong><br>' +
+          '・作業者<strong>1人あたりの年間人件費</strong>（賃金+賞与+福利厚生）<br>' +
+          '・各工程で使う<strong>設備の年間費用</strong>（リース料・減価償却費）</div>'
+      },
+      {
+        title: "1つ目の工程を入力",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">まず最初の工程を入力してください。</p>' +
+          '<div class="form-grid" style="max-width:400px">' +
+          '<label>工程名</label><input type="text" id="sg-dept-name" placeholder="例: シート加工">' +
+          '<label>直接作業者数</label><input type="number" id="sg-dept-workers" class="input-num" step="1" value="0">' +
+          '<label>1人あたり年間人件費(円)</label><input type="number" id="sg-dept-labor" class="input-num" step="1" value="3500000">' +
+          '<label>標準機械装置費用(年/円)</label><input type="number" id="sg-dept-machine" class="input-num" step="1" value="0">' +
+          '</div>' +
+          '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
+          '人件費の目安：正社員1人あたり300〜450万円/年（賃金+賞与+福利厚生）<br>' +
+          '機械装置費用：その工程で使う設備のリース料や減価償却費の年間合計</div>'
+      },
+      {
+        title: "登録完了！",
+        html: '<div style="text-align:center;padding:20px 0">' +
+          '<div style="font-size:40px;margin-bottom:12px">🏭</div>' +
+          '<p style="font-size:16px;font-weight:600;margin-bottom:8px">工程を登録しました</p>' +
+          '<p style="font-size:14px;color:var(--text-muted);line-height:1.8">続けて他の工程も「+ 部門追加」ボタンから登録してください。<br>全工程の登録が終わったら「製品原価」タブへ進みます。</p>' +
+          '</div>'
+      }
+    ];
 
-    function showStep(idx) {
-      currentStep = idx;
-      titleEl.textContent = steps[idx].title;
-      progressEl.textContent = (idx + 1) + " / " + steps.length;
-      contentEl.innerHTML = steps[idx].html;
-      prevBtn.style.display = idx === 0 ? "none" : "";
-      nextBtn.textContent = idx === steps.length - 1 ? "完了" : "次へ";
+    // 製品ガイドのステップ
+    var productSteps = [
+      {
+        title: "製品を登録しましょう",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">原価を分析したい製品を登録します。全製品を入れる必要はありません。重要度の高い製品から始めてください。</p>' +
+          '<div style="background:var(--bg);border-radius:6px;padding:12px 16px;font-size:13px;line-height:2">' +
+          '<strong>準備するもの：</strong><br>' +
+          '・製品の<strong>販売価格</strong>（1個あたり）<br>' +
+          '・<strong>材料費</strong>（1個あたりの主要材料費）<br>' +
+          '・各工程での<strong>作業時間</strong>（1個あたり、時間単位）</div>'
+      },
+      {
+        title: "製品の基本情報を入力",
+        html: '<p style="font-size:14px;line-height:1.8;margin-bottom:12px">原価を分析したい製品の情報を入力してください。</p>' +
+          '<div class="form-grid" style="max-width:400px">' +
+          '<label>製品コード</label><input type="text" id="sg-prod-code" placeholder="例: A">' +
+          '<label>製品名</label><input type="text" id="sg-prod-name" placeholder="例: 製品A">' +
+          '<label>目標販売価格(円)</label><input type="number" id="sg-prod-price" class="input-num" step="1" value="0">' +
+          '<label>直接材料費(円/個)</label><input type="number" id="sg-prod-material" class="input-num" step="1" value="0">' +
+          '</div>' +
+          '<div class="help-example" style="margin-top:12px;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px">' +
+          '材料費：この製品1個を作るのに使う材料の合計金額<br>' +
+          '工程の作業時間は登録後に「製造ルーティング」で設定します</div>'
+      },
+      {
+        title: "登録完了！",
+        html: '<div style="text-align:center;padding:20px 0">' +
+          '<div style="font-size:40px;margin-bottom:12px">📊</div>' +
+          '<p style="font-size:16px;font-weight:600;margin-bottom:8px">製品を登録しました</p>' +
+          '<p style="font-size:14px;color:var(--text-muted);line-height:1.8">製品カードの「製造ルーティング」で各工程の作業時間を設定すると、原価と利益が自動計算されます。<br>「+ 工程追加」ボタンで工程を追加し、作業時間(h/個)を入力してください。</p>' +
+          '</div>'
+      }
+    ];
+
+    function startGuide(guideSteps, onSave) {
+      var localStep = 0;
+      function show(idx) {
+        localStep = idx;
+        titleEl.textContent = guideSteps[idx].title;
+        progressEl.textContent = (idx + 1) + " / " + guideSteps.length;
+        contentEl.innerHTML = guideSteps[idx].html;
+        prevBtn.style.display = idx === 0 ? "none" : "";
+        nextBtn.textContent = idx === guideSteps.length - 1 ? "完了" : "次へ";
+      }
+      prevBtn.onclick = function() { if (localStep > 0) show(localStep - 1); };
+      nextBtn.onclick = function() {
+        if (onSave) onSave(localStep);
+        if (localStep < guideSteps.length - 1) {
+          show(localStep + 1);
+        } else {
+          modal.style.display = "none";
+          reloadAll();
+        }
+      };
+      show(0);
+      modal.style.display = "";
     }
 
-    prevBtn.addEventListener("click", function() {
-      if (currentStep > 0) showStep(currentStep - 1);
+    // ボタンのイベント登録
+    var baseGuideBtn = document.getElementById("btn-base-guide");
+    if (baseGuideBtn) baseGuideBtn.addEventListener("click", function() {
+      startGuide(steps, function(step) {
+        if (step === 1) {
+          var data = loadData();
+          data.plData.sales = parseFloat(document.getElementById("sg-pl-sales").value) || 0;
+          data.plData.sga_total = parseFloat(document.getElementById("sg-pl-sga").value) || 0;
+          saveData(data);
+        } else if (step === 2) {
+          var data = loadData();
+          data.mcrData.material_cost = parseFloat(document.getElementById("sg-mcr-mat").value) || 0;
+          data.mcrData.labor_wages = parseFloat(document.getElementById("sg-mcr-labor").value) || 0;
+          data.mcrData.outsourcing_cost = parseFloat(document.getElementById("sg-mcr-out").value) || 0;
+          data.mcrData.exp_depreciation = parseFloat(document.getElementById("sg-mcr-exp").value) || 0;
+          saveData(data);
+        } else if (step === 3) {
+          var data = loadData();
+          data.companySettings.common_working_hours = parseInt(document.getElementById("sg-hours").value) || 1800;
+          saveData(data);
+        }
+      });
     });
 
-    nextBtn.addEventListener("click", function() {
-      // ステップのデータを保存
-      if (currentStep === 1) {
-        var data = loadData();
-        data.plData.sales = parseFloat(document.getElementById("sg-pl-sales").value) || 0;
-        data.plData.sga_total = parseFloat(document.getElementById("sg-pl-sga").value) || 0;
-        saveData(data);
-      } else if (currentStep === 2) {
-        var data = loadData();
-        data.mcrData.material_cost = parseFloat(document.getElementById("sg-mcr-mat").value) || 0;
-        var labor = parseFloat(document.getElementById("sg-mcr-labor").value) || 0;
-        data.mcrData.labor_wages = labor;
-        data.mcrData.labor_bonus = 0;
-        data.mcrData.labor_welfare = 0;
-        data.mcrData.outsourcing_cost = parseFloat(document.getElementById("sg-mcr-out").value) || 0;
-        var exp = parseFloat(document.getElementById("sg-mcr-exp").value) || 0;
-        data.mcrData.exp_depreciation = exp;
-        data.mcrData.exp_consumables = 0;
-        data.mcrData.exp_repairs = 0;
-        data.mcrData.exp_lease = 0;
-        data.mcrData.exp_utilities = 0;
-        data.mcrData.exp_taxes = 0;
-        data.mcrData.exp_rent = 0;
-        data.mcrData.exp_other = 0;
-        saveData(data);
-      } else if (currentStep === 3) {
-        var data = loadData();
-        data.companySettings.common_working_hours = parseInt(document.getElementById("sg-hours").value) || 1800;
-        saveData(data);
-      }
+    var deptGuideBtn = document.getElementById("btn-dept-guide");
+    if (deptGuideBtn) deptGuideBtn.addEventListener("click", function() {
+      startGuide(deptSteps, function(step) {
+        if (step === 1) {
+          var name = (document.getElementById("sg-dept-name").value || "").trim();
+          if (!name) return;
+          var workers = parseInt(document.getElementById("sg-dept-workers").value) || 0;
+          var laborPer = parseFloat(document.getElementById("sg-dept-labor").value) || 0;
+          var machine = parseFloat(document.getElementById("sg-dept-machine").value) || 0;
+          var data = loadData();
+          data.departments.push({
+            id: nextId(data.departments),
+            department_name: name,
+            worker_count: workers,
+            labor_cost_per_person: laborPer,
+            annual_labor_cost: workers * laborPer,
+            allocation_base_type: "operating_hours",
+            allocation_base_value: 0,
+            is_machine_based: false,
+            standard_machine_cost: machine,
+            machine_count: 0,
+            machine_operating_hours: 0
+          });
+          saveData(data);
+          showToast("部門「" + name + "」を登録しました", "success");
+        }
+      });
+    });
 
-      if (currentStep < steps.length - 1) {
-        showStep(currentStep + 1);
-      } else {
-        modal.style.display = "none";
-        reloadAll();
-        showToast("基本データを登録しました。次は部門（工程）を登録してください。", "success");
-      }
+    var prodGuideBtn = document.getElementById("btn-product-guide");
+    if (prodGuideBtn) prodGuideBtn.addEventListener("click", function() {
+      startGuide(productSteps, function(step) {
+        if (step === 1) {
+          var name = (document.getElementById("sg-prod-name").value || "").trim();
+          if (!name) return;
+          var data = loadData();
+          data.products.push({
+            id: nextId(data.products),
+            product_code: document.getElementById("sg-prod-code").value || "",
+            product_name: name,
+            target_sales_price: parseFloat(document.getElementById("sg-prod-price").value) || 0,
+            direct_material_cost: parseFloat(document.getElementById("sg-prod-material").value) || 0,
+            direct_outsourcing_cost: 0,
+            special_direct_expense: 0,
+            routings: []
+          });
+          saveData(data);
+          showToast("製品「" + name + "」を登録しました", "success");
+        }
+      });
     });
 
     // 公開（オンボーディングから呼び出す）
     window.CostApp.startStepGuide = function() {
-      showStep(0);
-      modal.style.display = "";
+      startGuide(steps, function(step) {
+        if (step === 1) {
+          var data = loadData();
+          data.plData.sales = parseFloat(document.getElementById("sg-pl-sales").value) || 0;
+          data.plData.sga_total = parseFloat(document.getElementById("sg-pl-sga").value) || 0;
+          saveData(data);
+        } else if (step === 2) {
+          var data = loadData();
+          data.mcrData.material_cost = parseFloat(document.getElementById("sg-mcr-mat").value) || 0;
+          data.mcrData.labor_wages = parseFloat(document.getElementById("sg-mcr-labor").value) || 0;
+          data.mcrData.outsourcing_cost = parseFloat(document.getElementById("sg-mcr-out").value) || 0;
+          data.mcrData.exp_depreciation = parseFloat(document.getElementById("sg-mcr-exp").value) || 0;
+          saveData(data);
+        } else if (step === 3) {
+          var data = loadData();
+          data.companySettings.common_working_hours = parseInt(document.getElementById("sg-hours").value) || 1800;
+          saveData(data);
+        }
+      });
     };
   }
 
