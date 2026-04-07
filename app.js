@@ -590,13 +590,30 @@
     });
   }
 
-  // ══ 初回オンボーディング ══
-  function initOnboarding() {
+  // ══ カバーページ ══
+  function initCoverPage() {
+    var cover = document.getElementById("cover-page");
+    if (!cover) return;
     var data = loadData();
     var cs = data.companySettings;
     var isEmpty = !cs.setting_name && data.departments.length === 0 && data.products.length === 0 && !cs.common_working_hours;
-    if (!isEmpty) return;
 
+    if (!isEmpty) {
+      cover.style.display = "none";
+      return;
+    }
+
+    document.getElementById("btn-cover-start").addEventListener("click", function() {
+      cover.classList.add("hide");
+      setTimeout(function() {
+        cover.style.display = "none";
+        initOnboarding();
+      }, 400);
+    });
+  }
+
+  // ══ 初回オンボーディング ══
+  function initOnboarding() {
     var modal = document.getElementById("onboarding-modal");
     if (!modal) return;
     modal.style.display = "";
@@ -997,7 +1014,7 @@
     if (window.CostApp.deptCost) window.CostApp.deptCost.init();
     if (window.CostApp.productCost) window.CostApp.productCost.init();
 
-    initOnboarding();
+    initCoverPage();
   });
 
   // ══ 公開API ══
