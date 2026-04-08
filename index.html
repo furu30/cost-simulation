@@ -182,6 +182,8 @@
         <input type="number" id="split-outsourcing-ratio" class="input-num" min="0" max="100" step="1" value="100">
         <label>減価償却費 直接費率（%）</label>
         <input type="number" id="split-depreciation-ratio" class="input-num" min="0" max="100" step="1" value="0">
+        <label>労務費 直接費率（%） <span class="tooltip-icon" data-tip="決算書の労務費（賃金+賞与+福利厚生費）のうち、製造部門の直接作業に紐づく割合。残業代や間接作業者の人件費を含む場合は100%未満に設定してください。部門登録の人件費はアワーレートの直接原価部分に使われ、ここの設定は製造間接費の算出に使われます。">?</span></label>
+        <input type="number" id="split-labor-ratio" class="input-num" min="0" max="100" step="1" value="100">
         <label id="split-shipping-ratio-label" style="display:none">運送費 直接費率（%）</label>
         <input type="number" id="split-shipping-ratio" class="input-num" min="0" max="100" step="1" value="100" style="display:none">
       </div>
@@ -192,6 +194,8 @@
         <input type="number" id="split-outsourcing-indirect" class="input-num" step="1" value="0">
         <label>減価償却費 うち間接費分（千円）</label>
         <input type="number" id="split-depreciation-indirect" class="input-num" step="1" value="0">
+        <label>労務費 うち間接費分（千円）</label>
+        <input type="number" id="split-labor-indirect" class="input-num" step="1" value="0">
         <label id="split-shipping-indirect-label" style="display:none">運送費 うち間接費分（千円）</label>
         <input type="number" id="split-shipping-indirect" class="input-num" step="1" value="0" style="display:none">
       </div>
@@ -228,7 +232,7 @@
         </div>
         <h3>労務費</h3>
         <div style="margin:4px 0 8px;font-size:11px;color:var(--text-muted)">
-          ※ 決算書の金額をそのまま入力してください。部門の直接人件費との差額が自動的に間接労務費として計算されます。
+          ※ 決算書の金額をそのまま入力してください。直接費の割合は上段の「直接費・間接費の区分」で設定します。
         </div>
         <div class="form-grid">
           <label>賃金（千円）</label>
@@ -244,9 +248,8 @@
           <input type="number" id="mcr-outsourcing" class="input-num" step="1">
         </div>
         <h3>経費</h3>
-        <div class="guide-callout guide-callout-warning" style="margin:4px 0 8px;padding:8px 12px;font-size:12px">
-          <strong>⚠️ 減価償却費の二重計上に注意</strong><br>
-          部門（工程）の「標準機械装置費用」に含めた設備の償却費は、ここには入力しないでください。決算書の減価償却費から、部門に直接計上済みの分を差し引いた残り（建物・共用設備等）だけを入力します。
+        <div style="margin:4px 0 8px;font-size:11px;color:var(--text-muted)">
+          ※ 決算書の金額をそのまま入力してください。直接費の割合は上段の「直接費・間接費の区分」で設定します。
         </div>
         <div class="form-grid">
           <label>減価償却費（千円）</label>
@@ -389,35 +392,17 @@
       <h3>1-4. 製造原価報告書データ</h3>
       <p>材料費・労務費・外注加工費・経費の各項目を千円単位で入力します。</p>
 
-      <div class="guide-callout guide-callout-danger">
-        <strong>🚨 減価償却費の入力に注意！</strong><br>
-        全社設定の「減価償却費」には、<strong>部門タブの「標準機械装置費用」に含めた分を除いた残り</strong>だけを入力してください。<br>
-        決算書の減価償却費をそのまま転記すると<strong>二重計上</strong>になります。
-      </div>
-
-      <div class="guide-example">
-        <strong>【例】</strong> 決算書の減価償却費が年間 <strong>5,000万円</strong> の場合
-        <table class="data-table compact" style="margin-top:8px">
-          <thead>
-            <tr><th>入力場所</th><th>入れるべき内容</th><th>金額</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>部門タブ「標準機械装置費用」</td><td>各工程で直接使う設備の償却費</td><td><strong>3,500万円</strong></td></tr>
-            <tr><td>全社設定「減価償却費」</td><td>建物・共用設備など間接的な償却費</td><td><strong>1,500万円</strong></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="guide-callout guide-callout-warning">
-        <strong>⚠️ 労務費も同様に注意</strong><br>
-        労務費（賃金・賞与・福利厚生費）は、部門タブの「作業者年間人件費」に含めた分と重複しないようにしてください。<br>
-        ただし、製造原価報告書には決算書の金額をそのまま入力してOKです（システムが自動で差し引き調整します）。
+      <div class="guide-callout guide-callout-info" style="border-left:4px solid var(--info);padding:10px 14px">
+        <strong>💡 決算書の金額をそのまま入力してください</strong><br>
+        減価償却費・労務費とも、決算書の金額をそのまま転記してOKです。<br>
+        部門タブの「標準機械装置費用」や「作業者年間人件費」との重複は、上段の<strong>「直接費・間接費の区分」</strong>の直接費率で制御されます。
       </div>
 
       <h3>1-5. 間接費の自動計算を確認</h3>
       <p>入力後、画面下部に間接費が自動計算されて表示されます。確認したら<strong>「保存」ボタン</strong>を押してください。</p>
       <div class="guide-formula">
-        製造間接費 = 製造原価合計 − 材料費 − 外注費 − 直接人件費合計<br>
+        製造間接費 = 製造原価合計 − 直接材料費 − 直接外注費 − 直接償却費 − 直接労務費<br>
+        ※ 各科目の直接費は「直接費・間接費の区分」で設定した直接費率で算出<br>
         販管費 = P&L販管費<br>
         <strong>間接費合計 = 製造間接費 + 販管費</strong>
       </div>

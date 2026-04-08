@@ -32,10 +32,12 @@
         outsourcing_direct_ratio: 100,    // 外注費の直接費率(%)
         shipping_direct_ratio: 100,       // 運送費の直接費率(%)
         depreciation_direct_ratio: 0,     // 減価償却費の直接費率(%) ※部門機械費に含まれない分
+        labor_direct_ratio: 100,          // 労務費の直接費率(%) ※部門人件費でなくMCR労務費に適用
         material_indirect_amount: 0,      // 材料費の間接費分(千円) B案用
         outsourcing_indirect_amount: 0,   // 外注費の間接費分(千円) B案用
         shipping_indirect_amount: 0,      // 運送費の間接費分(千円) B案用
-        depreciation_indirect_amount: 0   // 減価償却費の間接費分(千円) B案用
+        depreciation_indirect_amount: 0,  // 減価償却費の間接費分(千円) B案用
+        labor_indirect_amount: 0          // 労務費の間接費分(千円) B案用
       },
       /** departments テーブル */
       departments: [],
@@ -104,14 +106,13 @@
     var mcrTotal = 0;
     mcrKeys.forEach(function(k) { mcrTotal += (mcr[k] || 0); });
 
-    // 部門の直接人件費合計(千円変換)
-    var totalLaborK = 0;
-    depts.forEach(function(d) { totalLaborK += (d.annual_labor_cost || 0) / 1000; });
+    // MCR労務費合計(千円)
+    var mcrLaborTotal = (mcr.labor_wages || 0) + (mcr.labor_bonus || 0) + (mcr.labor_welfare || 0);
 
     // 直間区分設定を適用
     var split = data.costSplitSettings || {};
     var level = cs.calc_level || 1;
-    var materialDirect, outsourcingDirect, depreciationDirect;
+    var materialDirect, outsourcingDirect, depreciationDirect, laborDirect;
     var depreciation = mcr.exp_depreciation || 0;
 
     if (level >= 2 && split.split_mode === "amount") {
@@ -119,20 +120,26 @@
       materialDirect = (mcr.material_cost || 0) - (split.material_indirect_amount || 0);
       outsourcingDirect = (mcr.outsourcing_cost || 0) - (split.outsourcing_indirect_amount || 0);
       depreciationDirect = depreciation - (split.depreciation_indirect_amount || 0);
+      laborDirect = mcrLaborTotal - (split.labor_indirect_amount || 0);
     } else if (level >= 2) {
       // A案: 割合指定
       materialDirect = (mcr.material_cost || 0) * ((split.material_direct_ratio != null ? split.material_direct_ratio : 100) / 100);
       outsourcingDirect = (mcr.outsourcing_cost || 0) * ((split.outsourcing_direct_ratio != null ? split.outsourcing_direct_ratio : 100) / 100);
       depreciationDirect = depreciation * ((split.depreciation_direct_ratio != null ? split.depreciation_direct_ratio : 0) / 100);
+      laborDirect = mcrLaborTotal * ((split.labor_direct_ratio != null ? split.labor_direct_ratio : 100) / 100);
     } else {
-      // 方式1: 全額直接扱い（減価償却は全額間接）
+      // 方式1: 全額直接扱い（減価償却は全額間接、労務費は部門合計ベース）
       materialDirect = mcr.material_cost || 0;
       outsourcingDirect = mcr.outsourcing_cost || 0;
       depreciationDirect = 0;
+      // 方式1は部門登録ベースのまま（後方互換）
+      var totalLaborK = 0;
+      depts.forEach(function(d) { totalLaborK += (d.annual_labor_cost || 0) / 1000; });
+      laborDirect = totalLaborK;
     }
 
-    // 製造間接費(千円) = MCR合計 − 直接材料費 − 直接外注費 − 直接減価償却費 − 直接人件費
-    var mfgIndirectK = mcrTotal - materialDirect - outsourcingDirect - depreciationDirect - totalLaborK;
+    // 製造間接費(千円) = MCR合計 − 直接材料費 − 直接外注費 − 直接減価償却費 − 直接労務費
+    var mfgIndirectK = mcrTotal - materialDirect - outsourcingDirect - depreciationDirect - laborDirect;
 
     // 販管費(千円): 運送費の直接分のみ控除(freight ON時)
     var shippingTotal = cs.enable_freight_cost ? (pl.sga_shipping || 0) : 0;
@@ -307,7 +314,7 @@
   function buildDemoData() {
     return {
       companySettings: {
-        setting_name: "2024年度 標準設定",
+        setting_name: "2026年度 精密板金 基準原価モデル",
         calc_level: 3,
         enable_freight_cost: false,
         freight_rate_per_unit: 100,
